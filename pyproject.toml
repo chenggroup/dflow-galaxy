@@ -10,6 +10,7 @@ python = "^3.9"
 pydflow = "^1.8.51"
 dpdispatcher = "^0.6.4"
 ai2-kit= "0.14.10"
+dp-launching-sdk = "^0.12.0"
 
 
 [tool.poetry.group.dev.dependencies]
