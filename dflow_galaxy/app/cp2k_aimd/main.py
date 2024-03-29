@@ -1,6 +1,16 @@
-from dp.launching.typing import BaseModel, Field, OutputDirectory, InputFilePath
+from dp.launching.typing import BaseModel, Field, OutputDirectory, InputFilePath, Optional
 from dp.launching.typing import Int, String, Enum, Float, Boolean
 from dp.launching.cli import to_runner, default_minimal_exception_handler
+
+from ai2_kit.feat import catalysis as ai2cat
+
+from pathlib2 import Path
+import shutil
+
+
+def get_cp2k_data_file(name: str):
+    data_dir = Path(__file__).parent / "res" / "data" / name  # type: ignore
+    return str(data_dir)
 
 
 class SystemTypeOptions(String, Enum):
@@ -54,7 +64,7 @@ class PotentialOptions(String, Enum):
     LnPP1_POTENTIALS = "LnPP1_POTENTIALS"
 
 
-class InputArgs(BaseModel):
+class Cp2kArgs(BaseModel):
     dry_run: Boolean = Field(
         default = True,
         description="Generate configuration file without running the simulation")
@@ -90,21 +100,53 @@ class InputArgs(BaseModel):
         default=PotentialOptions.GTH_POTENTIALS,
         description='Select the potential for the simulation')
 
-    raw_cp2k_input: InputFilePath = Field(
-        description='Provide your own CP2K input file, note that the above settings will be ignored.')
+    output_dir: OutputDirectory = Field(
+        default="./output",
+        description="Output directory for the simulation results")
 
 
-def main_entry(args: InputArgs) -> int:
-    status = 0
-    from pprint import pprint
-    pprint(args.dict())
-    return status
+def launching_entry(args: Cp2kArgs) -> int:
+    # stage 1: generate cp2k input file
+    basis_set_file = get_cp2k_data_file(args.basis_set)
+    potential_file = get_cp2k_data_file(args.potential)
+    # copy data file to cwd
+    # don't use absolute path as the config file will be use in docker
+    shutil.copy(basis_set_file, '.')
+    shutil.copy(potential_file, '.')
 
+    # create a closure to generate cp2k input file
+    def _gen_cp2k_input(out_dir: Path, aimd: bool):
+        config_builder = ai2cat.ConfigBuilder()
+        config_builder.load_system(args.system_file).gen_cp2k_input(
+            out_dir=str(out_dir),
+            basic_set_file=args.basis_set,
+            potential_file=args.potential,
+            style=args.system_type,  # type: ignore
+            temp=args.temperature,
+            steps=args.steps,
+            timestep=args.timestep,
+            parameter_file='dftd3.dat',
+            aimd=aimd,
+        )
+    aimd_out = Path(args.output_dir) / 'aimd'
+    dft_out = Path(args.output_dir) / 'dft'
+    _gen_cp2k_input(aimd_out, aimd=True)  # type: ignore
+    _gen_cp2k_input(dft_out, aimd=False)  # type: ignore
+
+    # skip stage 2 if dry_run
+    if args.dry_run:
+        return 0
+
+    # stage 2: run cp2k
+
+
+
+    return 0
 
 def to_parser():
     return to_runner(
-        InputArgs,
-        main_entry,
+        Cp2kArgs,
+        launching_entry,
         version="0.1.0",
         exception_handler=default_minimal_exception_handler
     )
@@ -112,3 +154,4 @@ def to_parser():
 if __name__ == "__main__":
     import sys
     to_parser()(sys.argv[1:])
+
