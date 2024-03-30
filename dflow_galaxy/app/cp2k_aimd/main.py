@@ -1,5 +1,6 @@
 from dp.launching.typing import BaseModel, Field, OutputDirectory, InputFilePath, Optional
 from dp.launching.typing import Int, String, Enum, Float, Boolean
+from dp.launching.typing import BohriumUsername, BohriumTicket, BohriumProjectId
 from dp.launching.cli import to_runner, default_minimal_exception_handler
 
 from ai2_kit.feat import catalysis as ai2cat
@@ -64,7 +65,7 @@ class PotentialOptions(String, Enum):
     LnPP1_POTENTIALS = "LnPP1_POTENTIALS"
 
 
-class Cp2kArgs(BaseModel):
+class FastCp2kArgs(BaseModel):
     dry_run: Boolean = Field(
         default = True,
         description="Generate configuration file without running the simulation")
@@ -104,8 +105,17 @@ class Cp2kArgs(BaseModel):
         default="./output",
         description="Output directory for the simulation results")
 
+    cp2k_image: String = Field(
+        default='registry.dp.tech/dptech/cp2k:11',
+        description="Docker image for running CP2K simulation")
 
-def launching_entry(args: Cp2kArgs) -> int:
+    # bohrium context for dflow
+    bohrium_username: BohriumUsername
+    bohrium_ticket: BohriumTicket
+    bohrium_project_id: BohriumProjectId
+
+
+def launching_app(args: FastCp2kArgs) -> int:
     # stage 1: generate cp2k input file
     basis_set_file = get_cp2k_data_file(args.basis_set.value)
     potential_file = get_cp2k_data_file(args.potential.value)
@@ -119,14 +129,15 @@ def launching_entry(args: Cp2kArgs) -> int:
         config_builder = ai2cat.ConfigBuilder()
         config_builder.load_system(args.system_file).gen_cp2k_input(
             out_dir=str(out_dir),
-            basic_set_file=args.basis_set.value,
-            potential_file=args.potential.value,
+            aimd=aimd,
+            # common options
             style=args.system_type,  # type: ignore
             temp=args.temperature,
             steps=args.steps,
             timestep=args.timestep,
+            basic_set_file=args.basis_set.value,
+            potential_file=args.potential.value,
             parameter_file='dftd3.dat',
-            aimd=aimd,
         )
     aimd_out = Path(args.output_dir) / 'aimd'
     dft_out = Path(args.output_dir) / 'dft'
@@ -143,15 +154,17 @@ def launching_entry(args: Cp2kArgs) -> int:
 
     return 0
 
-def to_parser():
-    return to_runner(
-        Cp2kArgs,
-        launching_entry,
+
+
+def main():
+    import sys
+    to_runner(
+        FastCp2kArgs,
+        launching_app,
         version="0.1.0",
         exception_handler=default_minimal_exception_handler
-    )
+    )(sys.argv[1:])
+
 
 if __name__ == "__main__":
-    import sys
-    to_parser()(sys.argv[1:])
-
+    main()

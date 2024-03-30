@@ -26,5 +26,8 @@ class RunCp2TaskFn:
         script = [
             f'cd {args.input_dir}/{self.task_dir}',
             f'{self.cp2k_cmd} -i cp2k.inp > cp2k.out',
+            f'mkdir -p {args.output_dir}',
+            f'mv * {args.output_dir}',
         ]
         return script
+
