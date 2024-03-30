@@ -11,7 +11,7 @@ GIT_HASH=$(git rev-parse --short HEAD)
 
 TAG=dflow-galaxy:$VERISON-$GIT_HASH
 
-docker build -t dflow-galaxy:$TAG .
+docker build -t $TAG .
 
 echo "Run the following command to push the image to Docker Hub:"
-echo "docker push dflow-galaxy:$TAG"
+echo "docker push $TAG"
