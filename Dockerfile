@@ -1,8 +1,17 @@
+# Use Python 3.10 base image
 FROM python:3.10
 
-ARG DFLOW_GALAXY_VERSION
+# Set environment variables for better performance
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-WORKDIR /app
-RUN pip install --no-cache-dir dflow-galaxy==$DFLOW_GALAXY_VERSION ai2-kit[all]
+# Set up working directory
+WORKDIR /workdir
+
+# Copy the wheel file into the container
+COPY dist/*.whl .
+
+# Install the package and remove pip cache
+RUN pip install --no-cache-dir *.whl ai2-kit[all] && \
+    rm -rf /root/.cache/pip/* && \
+    rm -rf *.whl
