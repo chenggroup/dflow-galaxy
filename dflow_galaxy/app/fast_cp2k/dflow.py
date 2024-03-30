@@ -55,3 +55,5 @@ def run_cp2k_workflow(input_dir: str,
 
     # run workflow
     dflow_builder.run()
+
+    # TODO: download output from s3

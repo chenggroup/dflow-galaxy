@@ -6,6 +6,8 @@ from dp.launching.cli import to_runner, default_minimal_exception_handler
 from ai2_kit.feat import catalysis as ai2cat
 from dflow.plugins import bohrium
 
+from dflow_galaxy.app.common import DflowOptions, setup_dflow_context
+
 from pathlib2 import Path
 import shutil
 
@@ -66,7 +68,7 @@ class PotentialOptions(String, Enum):
     LnPP1_POTENTIALS = "LnPP1_POTENTIALS"
 
 
-class FastCp2kArgs(BaseModel):
+class FastCp2kArgs(DflowOptions):
 
     dry_run: Boolean = Field(
         default = True,
@@ -111,11 +113,6 @@ class FastCp2kArgs(BaseModel):
         default='registry.dp.tech/dptech/cp2k:11',
         description="Docker image for running CP2K simulation")
 
-    # bohrium context for dflow
-    bohrium_username: BohriumUsername
-    bohrium_ticket: BohriumTicket
-    bohrium_project_id: BohriumProjectId
-
 
 def launching_app(args: FastCp2kArgs) -> int:
     # stage 1: generate cp2k input file
@@ -151,9 +148,7 @@ def launching_app(args: FastCp2kArgs) -> int:
         return 0
 
     # stage 2: run cp2k with dflow
-    bohrium.config['ticket'] = args.bohrium_ticket.get_value()
-    bohrium.config['username'] = args.bohrium_username.get_value()
-    bohrium.config['project_id'] = args.bohrium_project_id.get_value()
+    setup_dflow_context(args)
 
 
 
