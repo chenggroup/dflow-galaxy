@@ -23,9 +23,9 @@ class Resource(BaseModel):
 
 
 class BohriumConfig(BaseModel):
-    email: str
-    password: Optional[str]
-    project_id: str
+    email: Optional[str] = None
+    password: Optional[str] = None
+    project_id: Optional[str] = None
 
 
 class HpcConfig(BaseModel):
@@ -82,11 +82,15 @@ def create_bohrium_dispatcher(config: BohriumConfig, resource: Resource):
     if not password:
         raise ValueError('Bohrium password not found in environment variable BOHRIUM_PASSWORD or the configuration file')
 
-    remote_profile = {
-        'email': config.email,
-        'password': config.password,
-        'program_id': config.project_id,
-    }
+    # remote profile can also be config via global bohrium.config
+    remote_profile = {}
+    if config.email:
+        remote_profile['email'] = config.email
+    if config.project_id:
+        remote_profile['program_id'] = config.project_id
+    if config.password:
+        remote_profile['password'] = config.password
+
     machine_dict = {
         'batch_type': 'Bohrium',
         'context_type': 'Bohrium',

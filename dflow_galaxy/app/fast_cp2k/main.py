@@ -4,6 +4,7 @@ from dp.launching.typing import BohriumUsername, BohriumTicket, BohriumProjectId
 from dp.launching.cli import to_runner, default_minimal_exception_handler
 
 from ai2_kit.feat import catalysis as ai2cat
+from dflow.plugins import bohrium
 
 from pathlib2 import Path
 import shutil
@@ -148,8 +149,10 @@ def launching_app(args: FastCp2kArgs) -> int:
     if args.dry_run:
         return 0
 
-    # stage 2: run cp2k
-
+    # stage 2: run cp2k with dflow
+    bohrium.config['ticket'] = args.bohrium_ticket.get_value()
+    bohrium.config['username'] = args.bohrium_username.get_value()
+    bohrium.config['project_id'] = args.bohrium_project_id.get_value()
 
 
     return 0
