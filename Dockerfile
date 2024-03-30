@@ -12,6 +12,6 @@ WORKDIR /workdir
 COPY dist/*.whl .
 
 # Install the package and remove pip cache
-RUN pip install --no-cache-dir *.whl ai2-kit[all] && \
+RUN pip install -i https://pypi.mirrors.ustc.edu.cn/simple/ --no-cache-dir *.whl ai2-kit[all] && \
     rm -rf /root/.cache/pip/* && \
     rm -rf *.whl
