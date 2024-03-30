@@ -107,8 +107,8 @@ class Cp2kArgs(BaseModel):
 
 def launching_entry(args: Cp2kArgs) -> int:
     # stage 1: generate cp2k input file
-    basis_set_file = get_cp2k_data_file(args.basis_set)
-    potential_file = get_cp2k_data_file(args.potential)
+    basis_set_file = get_cp2k_data_file(args.basis_set.value)
+    potential_file = get_cp2k_data_file(args.potential.value)
     # copy data file to cwd
     # don't use absolute path as the config file will be use in docker
     shutil.copy(basis_set_file, '.')
