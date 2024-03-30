@@ -10,7 +10,7 @@ from dflow_galaxy.core.dflow import DFlowBuilder
 from dflow_galaxy.core.util import bash_iter_ls_slice, safe_ln, bash_ln_cmd, inspect_dir, bash_inspect_dir
 from dflow_galaxy.core import types
 
-from ai2_kit.domain.lammps import make_lammps_task_dirs
+from ai2_kit.domain.lammps import make_lammps_task_dirs, FepOptions
 from ai2_kit.domain.constant import DP_FROZEN_MODEL
 from ai2_kit.core.artifact import Artifact, ArtifactDict
 from ai2_kit.core.util import cmd_with_checkpoint as cmd_cp, dump_text
@@ -127,8 +127,8 @@ class SetupLammpsTasksFn:
             preset_template='default',
             n_wise=0,
             fix_statement=None,
-            ai2_kit_cmd='python -m ai2_kit.main',
             rel_path=True,
+            fep_opts=FepOptions(),
         )
         # write ancestor to the task dirs
         for task_dir in task_dirs:

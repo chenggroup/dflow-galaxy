@@ -79,11 +79,13 @@ class SetupCp2kTaskFn:
 
         assert system_files, 'no system files found'
 
+        task_dir = os.path.join(args.work_dir, 'tasks')
+        ensure_dir(task_dir)
         task_dirs = make_cp2k_task_dirs(
             system_files=system_files,
             input_template=self.config.input_template,
             template_vars=self.config.template_vars,
-            base_dir=ensure_dir(f'{args.work_dir}/tasks'),
+            base_dir=task_dir,
             limit=limit,
             limit_method=self.config.limit_method,
             # not supported yet

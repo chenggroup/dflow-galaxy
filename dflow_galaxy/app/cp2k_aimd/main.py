@@ -119,8 +119,8 @@ def launching_entry(args: Cp2kArgs) -> int:
         config_builder = ai2cat.ConfigBuilder()
         config_builder.load_system(args.system_file).gen_cp2k_input(
             out_dir=str(out_dir),
-            basic_set_file=args.basis_set,
-            potential_file=args.potential,
+            basic_set_file=args.basis_set.value,
+            potential_file=args.potential.value,
             style=args.system_type,  # type: ignore
             temp=args.temperature,
             steps=args.steps,
