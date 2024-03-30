@@ -67,6 +67,7 @@ class PotentialOptions(String, Enum):
 
 
 class FastCp2kArgs(BaseModel):
+
     dry_run: Boolean = Field(
         default = True,
         description="Generate configuration file without running the simulation")
@@ -153,6 +154,7 @@ def launching_app(args: FastCp2kArgs) -> int:
     bohrium.config['ticket'] = args.bohrium_ticket.get_value()
     bohrium.config['username'] = args.bohrium_username.get_value()
     bohrium.config['project_id'] = args.bohrium_project_id.get_value()
+
 
 
     return 0

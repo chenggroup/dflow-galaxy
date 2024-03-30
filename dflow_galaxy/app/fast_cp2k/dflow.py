@@ -38,21 +38,20 @@ def run_cp2k_workflow(input_dir: str,
     # start to build workflow
     dflow_builder = dflow.DFlowBuilder('cp2k', s3_prefix='cp2k')
 
-    # add cp2k step to workflow
+    # setup and add cp2k step to workflow
     # TODO: nodes and cpu_per_node should be configurable
     cp2k_res = dispatcher.Resource(
         image=cp2k_image,
         nodes=1,
         cpu_per_node=32,
     )
+    dflow_builder.s3_upload(input_dir, 'cp2k_input')
     cp2k_executor = dispatcher.create_bohrium_dispatcher(bohrium_config, cp2k_res)
     cp2k_fn = RunCp2kFn(cp2k_cmd=cp2k_cmd)
     cp2k_step = dflow_builder.make_bash_step(cp2k_fn, executor=cp2k_executor)(
-        RunCp2kArgs(input_dir=input_dir, output_dir='output')
+        RunCp2kArgs(input_dir='s3://./cp2k_input', output_dir='s3://./cp2k_output')
     )
     dflow_builder.add_step(cp2k_step)
 
     # run workflow
     dflow_builder.run()
-
-    # TODO: download result to output_dir
