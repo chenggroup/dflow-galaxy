@@ -10,7 +10,7 @@ from dflow.plugins import bohrium
 import dflow
 
 
-class DflowOptions(BaseModel):
+class DFlowOptions(BaseModel):
     bh_username: BohriumUsername
     bh_ticket: BohriumTicket
     bh_project_id: BohriumProjectId
@@ -23,7 +23,7 @@ class DflowOptions(BaseModel):
     dflow_storage_repository: DflowStorageRepository
 
 
-def setup_dflow_context(opts: DflowOptions):
+def setup_dflow_context(opts: DFlowOptions):
     """
     setup dflow context based on:
     https://dptechnology.feishu.cn/docx/HYjmdDj36oAksixbviKcbgUinUf

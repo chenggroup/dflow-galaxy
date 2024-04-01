@@ -1,15 +1,15 @@
 from dp.launching.typing import BaseModel, Field, OutputDirectory, InputFilePath, Optional
 from dp.launching.typing import Int, String, Enum, Float, Boolean
-from dp.launching.typing import BohriumUsername, BohriumTicket, BohriumProjectId
 from dp.launching.cli import to_runner, default_minimal_exception_handler
 
+from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context
 from ai2_kit.feat import catalysis as ai2cat
-from dflow.plugins import bohrium
-
-from dflow_galaxy.app.common import DflowOptions, setup_dflow_context
 
 from pathlib2 import Path
 import shutil
+import sys
+
+from .dflow import run_cp2k_workflow
 
 
 def get_cp2k_data_file(name: str):
@@ -68,7 +68,7 @@ class PotentialOptions(String, Enum):
     LnPP1_POTENTIALS = "LnPP1_POTENTIALS"
 
 
-class FastCp2kArgs(DflowOptions):
+class FastCp2kArgs(DFlowOptions):
 
     dry_run: Boolean = Field(
         default = True,
@@ -113,8 +113,12 @@ class FastCp2kArgs(DflowOptions):
         default='registry.dp.tech/dptech/cp2k:11',
         description="Docker image for running CP2K simulation")
 
+    cp2k_cmd: String = Field(
+        default='mpirun -np 32 cp2k.popt',
+        description="Command to run CP2K simulation")
 
-def launching_app(args: FastCp2kArgs) -> int:
+
+def launch_app(args: FastCp2kArgs) -> int:
     # stage 1: generate cp2k input file
     basis_set_file = get_cp2k_data_file(args.basis_set.value)
     potential_file = get_cp2k_data_file(args.potential.value)
@@ -149,18 +153,17 @@ def launching_app(args: FastCp2kArgs) -> int:
 
     # stage 2: run cp2k with dflow
     setup_dflow_context(args)
-
-
-
+    run_cp2k_workflow(
+        input_dir=str(aimd_out),
+        cp2k_image=args.cp2k_image,
+        cp2k_cmd=args.cp2k_cmd,
+    )
     return 0
 
-
-
 def main():
-    import sys
     to_runner(
         FastCp2kArgs,
-        launching_app,
+        launch_app,
         version="0.1.0",
         exception_handler=default_minimal_exception_handler
     )(sys.argv[1:])
