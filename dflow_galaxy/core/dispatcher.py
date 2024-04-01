@@ -5,6 +5,15 @@ from urllib.parse import urlparse
 import os
 
 
+class BohriumInputData(BaseModel):
+    image_name: str
+    job_type: str = 'container'
+    platform: str = 'ali'
+    scass_type: str = 'c2_m4_cpu'
+    job_name: str = 'bohrium_job'
+    disk_size: float = 20  # in GB
+
+
 class Resource(BaseModel):
     queue: Optional[str] = None
     image: Optional[str] = None
@@ -13,6 +22,10 @@ class Resource(BaseModel):
     nodes: int = 1
     cpu_per_node: int = 1
     gpu_per_node: int = 0
+
+    # use this for job running on bohrium
+    bohrium: Optional[BohriumInputData] = None
+
 
     def get_resource_dict(self):
         return {
@@ -77,20 +90,24 @@ def create_dispatcher(config: ExecutorConfig, resource: Resource):
 
 
 def create_bohrium_dispatcher(config: BohriumConfig, resource: Resource):
+    if resource.bohrium is None:
+        raise ValueError('Bohrium resource is required when using Bohrium dispatcher')
     from dflow.plugins.dispatcher import DispatcherExecutor
     password = os.environ.get('BOHRIUM_PASSWORD') or config.password
-    if not password:
-        raise ValueError('Bohrium password not found in environment variable BOHRIUM_PASSWORD or the configuration file')
 
     # remote profile can also be config via global bohrium.config
     remote_profile = {}
     if config.email:
         remote_profile['email'] = config.email
-    if config.project_id:
-        remote_profile['program_id'] = config.project_id
-    if config.password:
-        remote_profile['password'] = config.password
 
+    if config.project_id:
+        # I don't know which one is correct, so I set both
+        remote_profile['program_id'] = config.project_id
+        remote_profile['project_id'] = config.project_id
+    if password:
+        remote_profile['password'] = password
+
+    remote_profile['input_data'] = resource.bohrium.dict()
     machine_dict = {
         'batch_type': 'Bohrium',
         'context_type': 'Bohrium',
@@ -98,6 +115,7 @@ def create_bohrium_dispatcher(config: BohriumConfig, resource: Resource):
     }
     return DispatcherExecutor(
         machine_dict=machine_dict,
+        # the following are not used in Bohrium dispatcher
         image=resource.image,
         resources_dict= resource.get_resource_dict(),
     )
