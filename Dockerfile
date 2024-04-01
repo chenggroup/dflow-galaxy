@@ -17,6 +17,6 @@ COPY launch_app launch_app
 COPY dist/*.whl .
 
 # Install the package and remove pip cache
-RUN pip install --no-cache-dir *.whl ai2-kit[all] && \
+RUN pip install --no-cache-dir -U *.whl ai2-kit[all] && \
     rm -rf /root/.cache/pip/* && \
     rm -rf *.whl
