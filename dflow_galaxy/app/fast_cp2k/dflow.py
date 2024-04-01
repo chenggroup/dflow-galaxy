@@ -29,6 +29,7 @@ class RunCp2kFn:
 def run_cp2k_workflow(input_dir: str,
                       out_dir: str,
                       cp2k_image: str,
+                      cp2k_device_model: str,
                       cp2k_cmd: str):
 
     # bohrium dispatcher will be configured in bohrium.config
@@ -39,12 +40,14 @@ def run_cp2k_workflow(input_dir: str,
     dflow_builder = dflow.DFlowBuilder('cp2k', s3_prefix='cp2k')
 
     # setup and add cp2k step to workflow
-    # TODO: nodes and cpu_per_node should be configurable
     cp2k_res = dispatcher.Resource(
-        image=cp2k_image,
-        nodes=1,
-        cpu_per_node=32,
+        bohrium=dispatcher.BohriumInputData(
+            image_name=cp2k_image,
+            scass_type=cp2k_device_model,
+            disk_size=100,
+        )
     )
+
     dflow_builder.s3_upload(input_dir, 'cp2k_input')
     cp2k_executor = dispatcher.create_bohrium_dispatcher(bohrium_config, cp2k_res)
     cp2k_fn = RunCp2kFn(cp2k_cmd=cp2k_cmd)
@@ -56,4 +59,5 @@ def run_cp2k_workflow(input_dir: str,
     # run workflow
     dflow_builder.run()
 
-    # TODO: download output from s3
+    # download artifacts to out_dir
+    dflow_builder.s3_download('cp2k_output', out_dir)

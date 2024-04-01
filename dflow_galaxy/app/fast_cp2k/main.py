@@ -116,8 +116,12 @@ class FastCp2kArgs(DFlowOptions):
         default='registry.dp.tech/dptech/cp2k:11',
         description="Docker image for running CP2K simulation")
 
+    cp2k_device_model: String = Field(
+        default='c32_m128_cpu',
+        description="Device model for CP2K simulation")
+
     cp2k_cmd: String = Field(
-        default='mpirun -np 32 cp2k.popt',
+        default='cp2k.psmp',
         description="Command to run CP2K simulation, note that it depends on the docker image")
 
     cp2k_data_dir: String  = Field(
@@ -164,6 +168,7 @@ def launch_app(args: FastCp2kArgs) -> int:
         run_cp2k_workflow(
             input_dir=str(aimd_out),
             out_dir=str(args.output_dir),
+            cp2k_device_model=str(args.cp2k_device_model),
             cp2k_image=str(args.cp2k_image),
             cp2k_cmd=str(args.cp2k_cmd),
         )
