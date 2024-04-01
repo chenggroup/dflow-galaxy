@@ -8,8 +8,9 @@ poetry build
 # Get short Git hash
 VERISON=$(poetry version --no-ansi | awk '{print $2}')
 GIT_HASH=$(git rev-parse --short HEAD)
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 
-TAG=dflow-galaxy:$VERISON-$GIT_HASH
+TAG=dflow-galaxy:$VERISON-$BRANCH_NAME-$GIT_HASH
 
 docker build -t $TAG .
 
