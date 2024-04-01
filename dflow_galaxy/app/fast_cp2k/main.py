@@ -76,11 +76,11 @@ class FastCp2kArgs(DFlowOptions):
         description="Generate configuration file without running the simulation")
 
     system_file: InputFilePath = Field(
-        description="Upload a system file as the initial structure of AIMD simulation")
+        description="A system file as the initial structure of AIMD simulation")
 
     system_type: SystemTypeOptions = Field(
         default=SystemTypeOptions.metal,
-        description="Type of the system")
+        description="Type of the system, semi for semi-conductor, metal for metal")
 
     accuracy: AccuracyOptions = Field(
         default=AccuracyOptions.medium,
