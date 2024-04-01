@@ -2169,13 +2169,13 @@ test = ["black (>=21.7b0)", "mypy (>=0.930)", "pytest (>=6.0.1)"]
 
 [[package]]
 name = "pydflow"
-version = "1.8.51"
+version = "1.8.60"
 description = "Dflow is a Python framework for constructing scientific computing workflows employing Argo Workflows as the workflow engine."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "pydflow-1.8.51-py3-none-any.whl", hash = "sha256:05e961819a87df82b926f41a6dcf502a657b1b74f84b27db0a9b6e14b77a5961"},
-    {file = "pydflow-1.8.51.tar.gz", hash = "sha256:73ba1367ea89b1fbcd0758d480c9b9a0a234c38cbaf0aa9aa32fc06af13ec34d"},
+    {file = "pydflow-1.8.60-py3-none-any.whl", hash = "sha256:dbbb365a31cf4e303e1aac4a74a8fe218d4c01a8e2ea0cae965a7156294a0aa8"},
+    {file = "pydflow-1.8.60.tar.gz", hash = "sha256:6cbd30e910758d317fffbf0ed3f0b993e9d97128746aa2982b0fa8d18c6d095d"},
 ]
 
 [package.dependencies]
@@ -3217,4 +3217,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "44d89f482520a47bb76f0b70f2e7dac0af7081a34b04b9770f7aa91243b340a8"
+content-hash = "94e305f2f25021a1cc665957b0d7f66ae97a3dba741dce5634681a67ae0a26b1"
