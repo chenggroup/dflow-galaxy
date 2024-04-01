@@ -26,5 +26,14 @@ poetry install
 poetry shell
 ```
 
+## Bohrium Launch App
+This repository also contains some launch apps for Bohrium. The entry of the Bohrium launch app is in the `launch_app` directory, and relative modules are in the `dflow_galaxy/app` directory.
+
+To build docker image for the launch app, you can use the following command:
+
+```bash
+./build-docker.sh
+```
+
 ## Manuals
 * [TESLA Workflow](doc/tesla.md)
