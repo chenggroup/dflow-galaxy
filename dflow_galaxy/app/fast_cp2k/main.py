@@ -4,6 +4,7 @@ from dp.launching.cli import to_runner, default_minimal_exception_handler
 
 from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context
 from dflow_galaxy.res import get_cp2k_data_dir
+from dflow_galaxy.core.log import get_logger
 from ai2_kit.feat import catalysis as ai2cat
 
 from pathlib import Path
@@ -12,6 +13,7 @@ import sys
 
 from .dflow import run_cp2k_workflow
 
+logger = get_logger(__name__)
 
 def get_cp2k_data_file(name: str):
     data_file =  get_cp2k_data_dir() / name
@@ -148,18 +150,22 @@ def launch_app(args: FastCp2kArgs) -> int:
     _gen_cp2k_input(aimd_out, aimd=True)
     _gen_cp2k_input(dft_out, aimd=False)
 
-    # skip stage 2 if dry_run
     if args.dry_run:
+        logger.info('skip dflow run due to dry_run is set to True')
         return 0
 
     # stage 2: run cp2k with dflow
-    setup_dflow_context(args)
-    run_cp2k_workflow(
-        input_dir=str(aimd_out),
-        out_dir=str(args.output_dir),
-        cp2k_image=args.cp2k_image,
-        cp2k_cmd=args.cp2k_cmd,
-    )
+    try:
+        setup_dflow_context(args)
+        run_cp2k_workflow(
+            input_dir=str(aimd_out),
+            out_dir=str(args.output_dir),
+            cp2k_image=str(args.cp2k_image),
+            cp2k_cmd=str(args.cp2k_cmd),
+        )
+    except Exception:
+        logger.exception('unexpected error when running dflow')
+        return 1
     return 0
 
 def main():

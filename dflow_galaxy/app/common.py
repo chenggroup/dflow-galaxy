@@ -1,4 +1,4 @@
-from dp.launching.typing import BaseModel
+from dp.launching.typing import BaseModel, Optional
 from dp.launching.typing import BohriumUsername, BohriumTicket, BohriumProjectId
 from dp.launching.typing import (
     DflowArgoAPIServer, DflowK8sAPIServer,
@@ -9,18 +9,21 @@ from dp.launching.typing import (
 from dflow.plugins import bohrium
 import dflow
 
+from dflow_galaxy.core.log import get_logger
+logger = get_logger(__name__)
+
 
 class DFlowOptions(BaseModel):
-    bh_username: BohriumUsername
-    bh_ticket: BohriumTicket
-    bh_project_id: BohriumProjectId
+    bh_username: Optional[BohriumUsername]
+    bh_ticket: Optional[BohriumTicket]
+    bh_project_id: Optional[BohriumProjectId]
 
-    dflow_labels: DflowLabels
-    dflow_argo_api_server: DflowArgoAPIServer
-    dflow_k8s_api_server: DflowK8sAPIServer
-    dflow_access_token: DflowAccessToken
-    dflow_storage_endpoint: DflowStorageEndpoint
-    dflow_storage_repository: DflowStorageRepository
+    dflow_labels: Optional[DflowLabels]
+    dflow_argo_api_server: Optional[DflowArgoAPIServer]
+    dflow_k8s_api_server: Optional[DflowK8sAPIServer]
+    dflow_access_token: Optional[DflowAccessToken]
+    dflow_storage_endpoint: Optional[DflowStorageEndpoint]
+    dflow_storage_repository: Optional[DflowStorageRepository]
 
 
 def setup_dflow_context(opts: DFlowOptions):
@@ -33,9 +36,10 @@ def setup_dflow_context(opts: DFlowOptions):
         'host': opts.dflow_argo_api_server,
         "k8s_api_server": opts.dflow_k8s_api_server,
         "token": opts.dflow_access_token,
-        "dflow_labels": opts.dflow_labels.get_value()
+        "dflow_labels": opts.dflow_labels,
     }
     dflow.config.update(dflow_config)
+    logger.info(f"dflow config: {dflow.config}")
 
     dflow_s3_config = {
         'endpoint': opts.dflow_storage_endpoint,
@@ -49,6 +53,7 @@ def setup_dflow_context(opts: DFlowOptions):
         'project_id': opts.bh_project_id,
     }
     bohrium.config.update(bohrium_config)
+    logger.info(f"bohrium config: {bohrium.config}")
 
     bohrium.config["tiefblue_url"] = "https://tiefblue.dp.tech"
     bohrium.config["bohrium_url"] = "https://bohrium.dp.tech"
