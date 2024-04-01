@@ -3,7 +3,7 @@ from dp.launching.typing import BohriumUsername, BohriumTicket, BohriumProjectId
 from dp.launching.typing import (
     DflowArgoAPIServer, DflowK8sAPIServer,
     DflowAccessToken, DflowStorageEndpoint,
-    DflowStorageRepository, DflowLabels
+    DflowStorageRepository, DflowLabels,
 )
 
 from dflow.plugins import bohrium
@@ -41,14 +41,6 @@ def setup_dflow_context(opts: DFlowOptions):
     dflow.config.update(dflow_config)
     logger.info(f"dflow config: {dflow.config}")
 
-    dflow_s3_config = {
-        'endpoint': opts.dflow_storage_endpoint,
-        'repo_key': opts.dflow_storage_repository,
-        'storage_client': bohrium.TiefblueClient(),
-    }
-    dflow.s3_config.update(dflow_s3_config)
-    logger.info(f's3_config: {dflow.s3_config}')
-
     bohrium_config = {
         'username': opts.bh_username,
         'ticket': opts.bh_ticket,
@@ -58,4 +50,15 @@ def setup_dflow_context(opts: DFlowOptions):
     }
     bohrium.config.update(bohrium_config)
     logger.info(f"bohrium config: {bohrium.config}")
+
+    dflow_s3_config = {
+        'endpoint': opts.dflow_storage_endpoint,
+        'repo_key': opts.dflow_storage_repository,
+    }
+    dflow.s3_config.update(dflow_s3_config)
+    logger.info(f's3_config: {dflow.s3_config}')
+
+    # side effect alert!!!
+    # the following must be set at the end of all config
+    dflow_s3_config['storage_client'] = bohrium.TiefblueClient()
 

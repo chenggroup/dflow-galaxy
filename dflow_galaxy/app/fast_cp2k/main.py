@@ -15,6 +15,7 @@ from .dflow import run_cp2k_workflow
 
 logger = get_logger(__name__)
 
+
 def get_cp2k_data_file(name: str):
     data_file =  get_cp2k_data_dir() / name
     return str(data_file)
