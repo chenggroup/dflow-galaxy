@@ -8,7 +8,7 @@ include = ["dflow_galaxy/res/*"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pydflow = "1.8.59"
+pydflow = "1.8.60"
 dpdispatcher = "^0.6.4"
 ai2-kit= "0.15.8"
 dp-launching-sdk = "^0.12.0"
