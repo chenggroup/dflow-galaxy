@@ -72,7 +72,7 @@ class PotentialOptions(String, Enum):
     LnPP1_POTENTIALS = "LnPP1_POTENTIALS"
 
 
-class FastCp2kArgs(DFlowOptions):
+class Cp2kLightningArgs(DFlowOptions):
 
     dry_run: Boolean = Field(
         default = True,
@@ -133,7 +133,7 @@ class FastCp2kArgs(DFlowOptions):
         description="Script to run CP2K simulation, note that it depends on the docker image")
 
 
-def launch_app(args: FastCp2kArgs) -> int:
+def launch_app(args: Cp2kLightningArgs) -> int:
     # stage 1: generate cp2k input file
     basis_set_file = get_cp2k_data_file(args.basis_set.value)
     potential_file = get_cp2k_data_file(args.potential.value)
@@ -187,7 +187,7 @@ def launch_app(args: FastCp2kArgs) -> int:
 
 def main():
     to_runner(
-        FastCp2kArgs,
+        Cp2kLightningArgs,
         launch_app,
         version="0.1.0",
         exception_handler=default_minimal_exception_handler
