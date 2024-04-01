@@ -118,7 +118,7 @@ class Cp2kLightningArgs(DFlowOptions):
         description="Docker image for running CP2K simulation")
 
     cp2k_device_model: String = Field(
-        default='c32_m128_cpu',
+        default='c32_m64_cpu',
         description="Device model for CP2K simulation")
 
     cp2k_script: String = Field(
