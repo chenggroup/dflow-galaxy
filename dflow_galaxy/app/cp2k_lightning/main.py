@@ -150,7 +150,7 @@ def launch_app(args: Cp2kLightningArgs) -> int:
             out_dir=out_dir,
             aimd=aimd,
             # common options
-            style=args.system_type,  # type: ignore
+            style=args.system_type.value,
             temp=args.temperature,
             steps=args.steps,
             timestep=args.timestep,
