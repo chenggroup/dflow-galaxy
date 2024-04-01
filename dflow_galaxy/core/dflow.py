@@ -384,13 +384,14 @@ class DFlowBuilder:
         :param path: The local file path.
         :param keys: The keys of the S3 object.
         """
-        if isinstance(path, str):
-            path = Path(path)
+        if not isinstance(path, str):
+            path = str(path)
 
         prefix = self.s3_prefix(key)
         if cache and prefix in self._s3_cache:
             return self._s3_cache[prefix]
-        self._s3_cache[prefix] = dflow.upload_s3(path, prefix, debug_func=self._s3_debug_fn)
+        # FIXME: the type of dflow.upload_s3 is not correct
+        self._s3_cache[prefix] = dflow.upload_s3(path, prefix, debug_func=self._s3_debug_fn)  # type: ignore
         return self._s3_cache[prefix]
 
     def s3_dump(self, data: Union[bytes, str], key: str) -> str:

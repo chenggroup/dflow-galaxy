@@ -118,7 +118,11 @@ class FastCp2kArgs(DFlowOptions):
 
     cp2k_cmd: String = Field(
         default='mpirun -np 32 cp2k.popt',
-        description="Command to run CP2K simulation")
+        description="Command to run CP2K simulation, note that it depends on the docker image")
+
+    cp2k_data_dir: String  = Field(
+        default='/opt/cp2k/data',
+        description="Directory for CP2K data files, note that it depends on the docker image")
 
 
 def launch_app(args: FastCp2kArgs) -> int:
