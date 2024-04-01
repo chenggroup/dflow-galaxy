@@ -3,9 +3,10 @@ from dp.launching.typing import Int, String, Enum, Float, Boolean
 from dp.launching.cli import to_runner, default_minimal_exception_handler
 
 from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context
+from dflow_galaxy.res import get_cp2k_data_dir
 from ai2_kit.feat import catalysis as ai2cat
 
-from pathlib2 import Path
+from pathlib import Path
 import shutil
 import sys
 
@@ -13,8 +14,8 @@ from .dflow import run_cp2k_workflow
 
 
 def get_cp2k_data_file(name: str):
-    data_dir = Path(__file__).parent / "res" / "data" / name  # type: ignore
-    return str(data_dir)
+    data_file =  get_cp2k_data_dir() / name
+    return str(data_file)
 
 
 class SystemTypeOptions(String, Enum):
@@ -144,8 +145,8 @@ def launch_app(args: FastCp2kArgs) -> int:
         )
     aimd_out = Path(args.output_dir) / 'aimd'
     dft_out = Path(args.output_dir) / 'dft'
-    _gen_cp2k_input(aimd_out, aimd=True)  # type: ignore
-    _gen_cp2k_input(dft_out, aimd=False)  # type: ignore
+    _gen_cp2k_input(aimd_out, aimd=True)
+    _gen_cp2k_input(dft_out, aimd=False)
 
     # skip stage 2 if dry_run
     if args.dry_run:
