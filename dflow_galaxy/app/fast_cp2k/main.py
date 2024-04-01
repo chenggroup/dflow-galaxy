@@ -156,6 +156,7 @@ def launch_app(args: FastCp2kArgs) -> int:
     setup_dflow_context(args)
     run_cp2k_workflow(
         input_dir=str(aimd_out),
+        out_dir=str(args.output_dir),
         cp2k_image=args.cp2k_image,
         cp2k_cmd=args.cp2k_cmd,
     )

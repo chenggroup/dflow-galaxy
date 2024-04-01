@@ -27,6 +27,7 @@ class RunCp2kFn:
 
 
 def run_cp2k_workflow(input_dir: str,
+                      out_dir: str
                       cp2k_image: str,
                       cp2k_cmd: str):
 
