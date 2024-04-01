@@ -11,7 +11,7 @@ class BohriumInputData(BaseModel):
     platform: str = 'ali'
     scass_type: str = 'c2_m4_cpu'
     job_name: str = 'bohrium_job'
-    disk_size: float = 20  # in GB
+    disk_size: int = 20  # in GB
 
 
 class Resource(BaseModel):

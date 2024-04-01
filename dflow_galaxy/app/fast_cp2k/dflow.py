@@ -10,8 +10,8 @@ class RunCp2kArgs:
 
 
 class RunCp2kFn:
-    def __init__(self, cp2k_cmd: str):
-        self.cp2k_cmd = cp2k_cmd
+    def __init__(self, cp2k_script: str):
+        self.cp2k_script = cp2k_script
 
     def __call__(self, args: RunCp2kArgs):
         """
@@ -19,7 +19,7 @@ class RunCp2kFn:
         """
         script = [
             f'cd {args.input_dir}',
-            f'{self.cp2k_cmd} -i cp2k.inp > cp2k.out',
+            self.cp2k_script,
             f'mkdir -p {args.output_dir}',
             f'mv * {args.output_dir}',
         ]
@@ -30,7 +30,7 @@ def run_cp2k_workflow(input_dir: str,
                       out_dir: str,
                       cp2k_image: str,
                       cp2k_device_model: str,
-                      cp2k_cmd: str):
+                      cp2k_script: str):
 
     # bohrium dispatcher will be configured in bohrium.config
     # so here we just leave it empty
@@ -50,7 +50,7 @@ def run_cp2k_workflow(input_dir: str,
 
     dflow_builder.s3_upload(input_dir, 'cp2k_input')
     cp2k_executor = dispatcher.create_bohrium_dispatcher(bohrium_config, cp2k_res)
-    cp2k_fn = RunCp2kFn(cp2k_cmd=cp2k_cmd)
+    cp2k_fn = RunCp2kFn(cp2k_script=cp2k_script)
     cp2k_step = dflow_builder.make_bash_step(cp2k_fn, executor=cp2k_executor)(
         RunCp2kArgs(input_dir='s3://./cp2k_input', output_dir='s3://./cp2k_output')
     )
