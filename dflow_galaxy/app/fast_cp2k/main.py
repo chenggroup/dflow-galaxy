@@ -123,12 +123,11 @@ class FastCp2kArgs(DFlowOptions):
 
     cp2k_script: String = Field(
         default= '\n'.join([
-            '# Note:',
-            '# 1. the output file must be named output',
+            '# 1. the output file must be named as `output`',
             '# 2. cp2k.aimd.inp for aimd and cp2k.dft.inp for dft',
-            'export CP2K_DATA_DIR=/opt/cp2k/data',
-            'export OMP_NUM_THREADS=32',
-            'cp2k.psmp -i cp2k.aimd.inp &> output',
+            '# The following command should be adjusted according to the container',
+            'source /opt/cp2k-toolchain/install/setup',
+            'mpirun -n 32 cp2k.popt -i cp2k.aimd.inp -o output',
         ]),
         format='multi-line',
         description="Script to run CP2K simulation, note that it depends on the docker image")

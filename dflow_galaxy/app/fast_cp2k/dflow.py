@@ -18,6 +18,8 @@ class RunCp2kFn:
         bash step to run cp2k aimd task
         """
         script = [
+            # guess cp2k data dir
+            '[[ -z "${CP2K_DATA_DIR}" ]] && export CP2K_DATA_DIR="$(dirname "$(which cp2k)")/../../data" || true',
             f'cd {args.input_dir}',
             self.cp2k_script,
             f'mkdir -p {args.output_dir}',
