@@ -14,16 +14,16 @@ logger = get_logger(__name__)
 
 
 class DFlowOptions(BaseModel):
-    bh_username: Optional[BohriumUsername]
-    bh_ticket: Optional[BohriumTicket]
-    bh_project_id: Optional[BohriumProjectId]
+    bh_username: BohriumUsername
+    bh_ticket: BohriumTicket
+    bh_project_id: BohriumProjectId
 
-    dflow_labels: Optional[DflowLabels]
-    dflow_argo_api_server: Optional[DflowArgoAPIServer]
-    dflow_k8s_api_server: Optional[DflowK8sAPIServer]
-    dflow_access_token: Optional[DflowAccessToken]
-    dflow_storage_endpoint: Optional[DflowStorageEndpoint]
-    dflow_storage_repository: Optional[DflowStorageRepository]
+    dflow_labels: DflowLabels
+    dflow_argo_api_server: DflowArgoAPIServer
+    dflow_k8s_api_server: DflowK8sAPIServer
+    dflow_access_token: DflowAccessToken
+    dflow_storage_endpoint: DflowStorageEndpoint
+    dflow_storage_repository: DflowStorageRepository
 
 
 def setup_dflow_context(opts: DFlowOptions):
@@ -46,7 +46,6 @@ def setup_dflow_context(opts: DFlowOptions):
         'repo_key': opts.dflow_storage_repository,
     }
     dflow.s3_config.update(dflow_s3_config)
-    logger.info(f's3_config: {dflow.s3_config}')
 
     bohrium_config = {
         'username': opts.bh_username,
@@ -63,3 +62,4 @@ def setup_dflow_context(opts: DFlowOptions):
     # side effect alert!!!
     # the following must be set at the end of all config
     dflow.s3_config['storage_client'] = bohrium.TiefblueClient()
+    logger.info(f's3_config: {dflow.s3_config}')
