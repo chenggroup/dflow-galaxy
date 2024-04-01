@@ -395,9 +395,11 @@ class DFlowBuilder:
         """
         Download file from S3 to local.
         """
-        return dflow.download_s3(self.s3_prefix(key), path,  # type: ignore
-                                 recursive=recursive, skip_exists=skip_exists, keep_dir=keep_dir,
-                                 debug_func=self._s3_debug_fn)
+        if self._debug:
+            return
+        dflow.download_s3(self.s3_prefix(key), path,  # type: ignore
+                          recursive=recursive, skip_exists=skip_exists, keep_dir=keep_dir,
+                          debug_func=self._s3_debug_fn)
 
     def s3_upload(self, path: Union[os.PathLike, str], key: str, cache: bool = False) -> str:
         """
