@@ -41,16 +41,6 @@ def setup_dflow_context(opts: DFlowOptions):
     dflow.config.update(dflow_config)
     logger.info(f"dflow config: {dflow.config}")
 
-    bohrium_config = {
-        'username': opts.bh_username,
-        'ticket': opts.bh_ticket,
-        'project_id': opts.bh_project_id,
-        'tiefblue_url': "https://tiefblue.dp.tech",
-        'bohrium_url': "https://bohrium.dp.tech",
-    }
-    bohrium.config.update(bohrium_config)
-    logger.info(f"bohrium config: {bohrium.config}")
-
     dflow_s3_config = {
         'endpoint': opts.dflow_storage_endpoint,
         'repo_key': opts.dflow_storage_repository,
@@ -58,7 +48,18 @@ def setup_dflow_context(opts: DFlowOptions):
     dflow.s3_config.update(dflow_s3_config)
     logger.info(f's3_config: {dflow.s3_config}')
 
+    bohrium_config = {
+        'username': opts.bh_username,
+        'ticket': opts.bh_ticket,
+        'project_id': opts.bh_project_id,
+    }
+    bohrium.config.update(bohrium_config)
+    logger.info(f"bohrium config: {bohrium.config}")
+
+    bohrium.config["tiefblue_url"] = "https://tiefblue.dp.tech"
+    bohrium.config["bohrium_url"] = "https://bohrium.dp.tech"
+    # override config? I have no idea
+    dflow.s3_config["repo_key"] = "oss-bohrium"
     # side effect alert!!!
     # the following must be set at the end of all config
-    dflow_s3_config['storage_client'] = bohrium.TiefblueClient()
-
+    dflow.s3_config['storage_client'] = bohrium.TiefblueClient()
