@@ -134,7 +134,6 @@ class FastCp2kArgs(DFlowOptions):
         description="Script to run CP2K simulation, note that it depends on the docker image")
 
 
-
 def launch_app(args: FastCp2kArgs) -> int:
     # stage 1: generate cp2k input file
     basis_set_file = get_cp2k_data_file(args.basis_set.value)

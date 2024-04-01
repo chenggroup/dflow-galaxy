@@ -375,7 +375,17 @@ class DFlowBuilder:
         self._debug = debug
 
     def s3_prefix(self, key: str):
-        return os.path.join(self.s3_base_prefix, key).strip('/ ')
+        """
+        get the full s3 prefix of a key.
+        """
+        base_prefix = self.s3_base_prefix
+        # context prefix is inject by bohrium platform
+        # to isolate namespace of different job
+        context_prefix = dflow.s3_config.get('prefix')
+        if context_prefix and not self._debug:
+            base_prefix = os.path.join(context_prefix, base_prefix).strip('/ ')
+
+        return os.path.join(base_prefix, key).strip('/ ')
 
     def s3_download(self, key: str, path: str = '.',
                     recursive: bool = True,
@@ -585,7 +595,7 @@ class DFlowBuilder:
             key = parsed.path.lstrip('/')
             assert parsed.netloc in ('', '.')
             if '.' == parsed.netloc:
-                key = os.path.join(self.s3_base_prefix, key)
+                key = self.s3_prefix(key)
             if self._debug:
                 key = os.path.abspath(key)
             return dflow.S3Artifact(key=key)
