@@ -125,9 +125,10 @@ class Cp2kLightningArgs(DFlowOptions):
         default= '\n'.join([
             '# 1. the output file must be named as `output`',
             '# 2. cp2k.aimd.inp for aimd and cp2k.dft.inp for dft',
-            '# The following command should be adjusted according to the container',
+            '# Note that different container may have different setup',
             'source /opt/cp2k-toolchain/install/setup',
-            'mpirun -n 32 cp2k.popt -i cp2k.aimd.inp -o output',
+            'mpirun -n 32 cp2k.popt -i cp2k.aimd.inp &> output',
+            'rm *.wfn  # reduce the size of output file',
         ]),
         format='multi-line',
         description="Script to run CP2K simulation, note that it depends on the docker image")
