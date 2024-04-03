@@ -117,6 +117,7 @@ _BashTemplate = namedtuple('_BashStep', ['source',
 def bash_build_template(py_fn: Callable,
                         base_dir: str,
                         setup_script: str = '',
+                        default_archive: Optional[str] = 'default',
                         eof: str = '__EOF__') -> _BashTemplate:
     """
     build bash step from a python function
@@ -146,7 +147,8 @@ def bash_build_template(py_fn: Callable,
     ]
 
     for f, v in iter_python_step_args(args_type):
-        if f.type.__metadata__[0] == types.Symbol.INPUT_PARAMETER:
+        meta = f.type.__metadata__[0]
+        if meta == types.Symbol.INPUT_PARAMETER:
             # input parameter can be a multiline string
             bash_name = f'_DF_INPUT_PARAMETER_{f.name}_'
             source.extend([
@@ -157,18 +159,29 @@ def bash_build_template(py_fn: Callable,
             ])
             dflow_input_parameters[f.name] = dflow.InputParameter(name=f.name)
             args_dict[f.name] = f'${bash_name}'
-        elif f.type.__metadata__[0] == types.Symbol.INPUT_ARTIFACT:
+
+        elif meta == types.Symbol.INPUT_ARTIFACT or isinstance(meta, dflow.InputArtifact):
             bash_name = f'_DF_INPUT_ARTIFACT_{f.name}_'
             path = os.path.join(input_artifacts_dir, f.name)
             source.append(f'{bash_name}={shlex.quote(path)}')
-            dflow_input_artifacts[f.name] = dflow.InputArtifact(path=path)
+            artifact = meta
+            if not isinstance(artifact, dflow.InputArtifact):
+                artifact = dflow.InputArtifact(path=path, archive=default_archive)  # type: ignore
+            dflow_input_artifacts[f.name] = artifact
             args_dict[f.name] = f'${bash_name}'
-        elif f.type.__metadata__[0] == types.Symbol.OUTPUT_ARTIFACT:
+
+        elif meta == types.Symbol.OUTPUT_ARTIFACT or isinstance(meta, dflow.OutputArtifact):
             bash_name = f'_DF_OUTPUT_ARTIFACT_{f.name}_'
             path = os.path.join(output_artifacts_dir, f.name)
             source.append(f'{bash_name}={shlex.quote(path)}')
-            dflow_output_artifacts[f.name] = dflow.OutputArtifact(path=path)  # type: ignore
+            artifact = meta
+            if not isinstance(artifact, dflow.OutputArtifact):
+                artifact = dflow.OutputArtifact(path=path, archive=default_archive)  # type: ignore
+            dflow_output_artifacts[f.name] = artifact
+
             args_dict[f.name] = f'${bash_name}'
+        else:
+            raise ValueError(f'unsupported type {f.type}')
 
     bash_script = py_fn(ObjProxy(args_dict))
     if isinstance(bash_script, list):
