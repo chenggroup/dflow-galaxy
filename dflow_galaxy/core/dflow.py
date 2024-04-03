@@ -645,12 +645,16 @@ class DFlowBuilder:
         parameters = {}
         artifacts = {}
         for f, v in iter_python_step_args(args):
-            if f.type.__metadata__[0] == types.Symbol.INPUT_PARAMETER:
+            meta = f.type.__metadata__[0]
+            if meta == types.Symbol.INPUT_PARAMETER:
                 parameters[f.name] = v
-            elif f.type.__metadata__[0] == types.Symbol.INPUT_ARTIFACT:
+            elif meta == types.Symbol.INPUT_ARTIFACT or isinstance(meta, dflow.InputArtifact):
                 artifacts[f.name] = self._ensure_artifact(v)  # type: ignore
-            elif f.type.__metadata__[0] == types.Symbol.OUTPUT_ARTIFACT:
+            elif meta == types.Symbol.OUTPUT_ARTIFACT or isinstance(meta, dflow.OutputArtifact):
                 template.outputs.artifacts[f.name].save = [self._ensure_artifact(v)]  # type: ignore
+            else:
+                raise ValueError(f'unsupported type {f.type}')
+
         step = dflow.Step(
             name=name,
             template=template,
