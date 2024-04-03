@@ -32,7 +32,8 @@ def run_tesla(*config_files: str, s3_prefix: str, debug: bool = False, skip: boo
     config.init()
 
 
-    builder = DFlowBuilder(name='tesla', s3_prefix=s3_prefix, debug=debug)
+    builder = DFlowBuilder(name='tesla', s3_prefix=s3_prefix, debug=debug,
+                           default_archive=None)
     step_switch = StepSwitch(skip)
     runtime_ctx = RuntimeContext()
 

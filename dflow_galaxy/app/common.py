@@ -14,16 +14,16 @@ logger = get_logger(__name__)
 
 
 class DFlowOptions(BaseModel):
-    bh_username: BohriumUsername
-    bh_ticket: BohriumTicket
-    bh_project_id: BohriumProjectId
+    bh_username: Optional[BohriumUsername]
+    bh_ticket: Optional[BohriumTicket]
+    bh_project_id: Optional[BohriumProjectId]
 
-    dflow_labels: DflowLabels
-    dflow_argo_api_server: DflowArgoAPIServer
-    dflow_k8s_api_server: DflowK8sAPIServer
-    dflow_access_token: DflowAccessToken
-    dflow_storage_endpoint: DflowStorageEndpoint
-    dflow_storage_repository: DflowStorageRepository
+    dflow_labels: Optional[DflowLabels]
+    dflow_argo_api_server: Optional[DflowArgoAPIServer]
+    dflow_k8s_api_server: Optional[DflowK8sAPIServer]
+    dflow_access_token: Optional[DflowAccessToken]
+    dflow_storage_endpoint: Optional[DflowStorageEndpoint]
+    dflow_storage_repository: Optional[DflowStorageRepository]
 
 
 def setup_dflow_context(opts: DFlowOptions):
