@@ -214,6 +214,7 @@ def python_build_template(py_fn: Callable,
                           base_dir: str,
                           setup_script: str = '',
                           python_cmd: str = 'python3',
+                          default_archive: Optional[str] = 'default',
                           eof: str = '__EOF__') -> _PythonTemplate:
     """
     build python template from a python function
@@ -260,7 +261,8 @@ def python_build_template(py_fn: Callable,
     ]
 
     for f, v in iter_python_step_args(args_type):
-        if f.type.__metadata__[0] == types.Symbol.INPUT_PARAMETER:
+        meta = f.type.__metadata__[0]
+        if meta == types.Symbol.INPUT_PARAMETER:
             # FIXME: may have error in some corner cases
             if _is_str_type(f.type.__origin__):
                 val = f'"""{{{{inputs.parameters.{f.name}}}}}"""'
@@ -268,14 +270,20 @@ def python_build_template(py_fn: Callable,
                 val = f'json.loads("""{{{{inputs.parameters.{f.name}}}}}""")'
             dflow_input_parameters[f.name] = dflow.InputParameter(name=f.name)
             source.append(f'args[{repr(f.name)}] = {val}')
-        elif f.type.__metadata__[0] == types.Symbol.INPUT_ARTIFACT:
+        elif meta == types.Symbol.INPUT_ARTIFACT or isinstance(meta, dflow.InputArtifact):
             path = os.path.join(input_artifacts_dir, f.name)
-            dflow_input_artifacts[f.name] = dflow.InputArtifact(path=path)
             source.append(f'args[{repr(f.name)}] = {repr(path)}')
-        elif f.type.__metadata__[0] == types.Symbol.OUTPUT_ARTIFACT:
+            artifact = meta
+            if not isinstance(artifact, dflow.InputArtifact):
+                artifact = dflow.InputArtifact(path=path, archive=default_archive)  # type: ignore
+            dflow_input_artifacts[f.name] = artifact
+        elif meta == types.Symbol.OUTPUT_ARTIFACT or isinstance(meta, dflow.OutputArtifact):
             path = os.path.join(output_artifacts_dir, f.name)
-            dflow_output_artifacts[f.name] = dflow.OutputArtifact(path=path)  # type: ignore
             source.append(f'args[{repr(f.name)}] = {repr(path)}')
+            artifact = meta
+            if not isinstance(artifact, dflow.OutputArtifact):
+                artifact = dflow.OutputArtifact(path=path, archive=default_archive)  # type: ignore
+            dflow_output_artifacts[f.name] = artifact
 
     source.extend([
         '',
