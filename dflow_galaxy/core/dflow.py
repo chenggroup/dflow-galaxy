@@ -364,6 +364,7 @@ class DFlowBuilder:
                  default_archive: Optional[str] = 'default',
                  debug=False,
                  container_base_dir: str = '/tmp/dflow-builder',
+                 allow_abs_s3_url=False,
                  s3_debug_fn = _s3_copy_fn):
         """
         :param name: The name of the workflow.
@@ -374,6 +375,7 @@ class DFlowBuilder:
         :param debug: If True, the workflow will be run in debug mode.
         :param local_mode: If True, the workflow will be run in local mode.
         :param container_base_dir: The base directory to mapping resources in remote container.
+        :param allow_abs_s3_url: If True, allow absolute s3 url in input artifacts
         :param s3_debug_fn: The function to upload file to S3 under debug mode.
         """
         if debug:
@@ -396,6 +398,7 @@ class DFlowBuilder:
         self._bash_scripts: Dict[Callable, str] = {}
         self._s3_cache: Dict[str, str] = {}
         self._s3_debug_fn = s3_debug_fn
+        self._allow_abs_s3_url = allow_abs_s3_url
         self._debug = debug
 
     def s3_prefix(self, key: str):
@@ -623,9 +626,11 @@ class DFlowBuilder:
         parsed = urlparse(url_or_obj)
         if parsed.scheme == 's3':
             key = parsed.path.lstrip('/')
-            assert parsed.netloc in ('', '.')
+            assert parsed.netloc in ('', '.'), f'unsupported s3 url {url_or_obj}'
             if '.' == parsed.netloc:
                 key = self.s3_prefix(key)
+            elif not self._allow_abs_s3_url:
+                raise ValueError(f'absolute s3 url {url_or_obj} is not allowed, use relative path instead, or set allow_abs_s3_url=True')
             if self._debug:
                 key = os.path.abspath(key)
             return dflow.S3Artifact(key=key)

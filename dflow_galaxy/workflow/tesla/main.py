@@ -31,7 +31,6 @@ def run_tesla(*config_files: str, s3_prefix: str, debug: bool = False, skip: boo
     config = TeslaConfig(**config_raw)
     config.init()
 
-
     builder = DFlowBuilder(name='tesla', s3_prefix=s3_prefix, debug=debug,
                            default_archive=None)
     step_switch = StepSwitch(skip)
@@ -162,9 +161,7 @@ def run_tesla(*config_files: str, s3_prefix: str, debug: bool = False, skip: boo
                 raw_workflow_cfg['workflow']['update'] = None  # clean the old update config
                 raw_workflow_cfg = merge_dict(raw_workflow_cfg, workflow_cfg.update.patch)
 
-
     builder.run()
-
 
 
 cmd_entry = CmdGroup({
