@@ -57,4 +57,5 @@ def run_lammps_workflow(input_dir: str,
     dflow_builder.run()
 
     # download artifacts to out_dir
-    dflow_builder.s3_download('lammps_output', f'{out_dir}/lammps_output.tgz')
+    dflow_builder.s3_download('lammps_output')
+    shutil.move('lammps_output', f'{out_dir}/lammps_output.tgz')

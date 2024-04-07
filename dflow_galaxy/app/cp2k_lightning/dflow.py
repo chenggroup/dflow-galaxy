@@ -62,4 +62,5 @@ def run_cp2k_workflow(input_dir: str,
     dflow_builder.run()
 
     # download artifacts to out_dir
-    dflow_builder.s3_download('cp2k_output', f'{out_dir}/cp2k_output.tgz')
+    dflow_builder.s3_download('cp2k_output')
+    shutil.move('cp2k_output', f'{out_dir}/cp2k_output.tgz')
