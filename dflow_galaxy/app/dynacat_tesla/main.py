@@ -14,12 +14,37 @@ import sys
 
 logger = get_logger(__name__)
 
+class DeepmdDataset(BaseModel):
+
+    data_file : InputFilePath = Field(
+        description="Deepmd dataset file in hfs5 format")
+
+    limit_size: Int = Field(
+        default=0,
+        description="Limit the size of the dataset, 0 means no limit")
+
+
+class ExploreDataset(BaseModel):
+    data_file: InputFilePath = Field(
+        description="Structure file in xyz format")
+
+    limit_size: Int = Field(
+        default=0,
+        description="Limit the size of the dataset, 0 means no limit")
+
+
 
 class DynacatTeslaArgs(DFlowOptions):
 
     dry_run: Boolean = Field(
         default = True,
         description="Generate configuration file without running the simulation")
+
+    deepmd_dataset: DeepmdDataset = Field(
+        description="Deepmd dataset for training")
+
+    explore_dataset: ExploreDataset = Field(
+        description="Structure dataset for exploring")
 
 
 def launch_app(args: DynacatTeslaArgs) -> int:
