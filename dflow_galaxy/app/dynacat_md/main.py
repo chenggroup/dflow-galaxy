@@ -2,7 +2,7 @@ from dp.launching.typing import BaseModel, Field, OutputDirectory, InputFilePath
 from dp.launching.typing import Int, String, Enum, Float, Boolean
 from dp.launching.cli import to_runner, default_minimal_exception_handler
 
-from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context
+from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context, EnsembleOptions
 from dflow_galaxy.core.log import get_logger
 from ai2_kit.feat import catalysis as ai2cat
 from ai2_kit.core.util import dump_text, dump_json
@@ -16,19 +16,6 @@ import os
 from .dflow import run_lammps_workflow
 
 logger = get_logger(__name__)
-
-
-class EnsembleOptions(String, Enum):
-    nvt = 'nvt'
-    nvt_i = 'nvt-i'
-    nvt_a = 'nvt-a'
-    nvt_iso = 'nvt-iso'
-    nvt_aniso = 'nvt-aniso'
-    npt = 'npt'
-    npt_t = 'npt-t'
-    npt_tri = 'npt-tri'
-    nve = 'nve'
-    csvr = 'csvr'
 
 
 class DynaCatMdArgs(DFlowOptions):

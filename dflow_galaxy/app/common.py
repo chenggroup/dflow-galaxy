@@ -1,4 +1,5 @@
 from dp.launching.typing import BaseModel, Optional
+from dp.launching.typing import Int, String, Enum, Float, Boolean
 from dp.launching.typing import BohriumUsername, BohriumTicket, BohriumProjectId
 from dp.launching.typing import (
     DflowArgoAPIServer, DflowK8sAPIServer,
@@ -63,3 +64,16 @@ def setup_dflow_context(opts: DFlowOptions):
     # the following must be set at the end of all config
     dflow.s3_config['storage_client'] = bohrium.TiefblueClient()
     logger.info(f's3_config: {dflow.s3_config}')
+
+
+class EnsembleOptions(String, Enum):
+    nvt = 'nvt'
+    nvt_i = 'nvt-i'
+    nvt_a = 'nvt-a'
+    nvt_iso = 'nvt-iso'
+    nvt_aniso = 'nvt-aniso'
+    npt = 'npt'
+    npt_t = 'npt-t'
+    npt_tri = 'npt-tri'
+    nve = 'nve'
+    csvr = 'csvr'
