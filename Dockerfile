@@ -1,5 +1,6 @@
 # Form previous image can save time of pip install
-FROM link89/dflow-galaxy:0.1.3-main-c83aaa8
+FROM link89/dflow-galaxy:0.1.4-main-8bb98c7
+
 
 # Use Python 3.10 base image to build from scratch
 # FROM python:3.10
