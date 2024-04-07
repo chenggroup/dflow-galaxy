@@ -64,7 +64,7 @@ class DynaCatMdArgs(DFlowOptions):
 
     step_size: Float = Field(
         default=0.0005,
-        description='Time step size of LAMMPS simulation')
+        description='Time step size of LAMMPS simulation in ps')
 
     sample_freq: Int = Field(
         title='Sampling Frequency',
@@ -78,7 +78,7 @@ class DynaCatMdArgs(DFlowOptions):
             'tau_p': 0.5,
             'time_const': 0.1,
         },
-        description="Other arguments for LAMMPS simulation, e.g. tau_t, tau_p, time_const, etc. Don't add extra arguments if you are not sure about it."
+        description="Other arguments for LAMMPS simulation, e.g. tau_t, tau_p, time_const, etc. Don't remove or add extra arguments if you are not sure about it."
     )
 
     output_dir : OutputDirectory = Field(
@@ -97,7 +97,7 @@ def launch_app(args: DynaCatMdArgs) -> int:
         nsteps=args.steps,
         temp=args.temperature,
         sample_freq=args.sample_freq,
-        pres= args.pressure,
+        pres=args.pressure,
         abs_path=False,
         dp_models=['dp-model.pb'],
         **args.other_args,
