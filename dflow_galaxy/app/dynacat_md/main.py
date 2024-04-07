@@ -18,7 +18,7 @@ from .dflow import run_lammps_workflow
 logger = get_logger(__name__)
 
 
-class EnsableOptions(String, Enum):
+class EnsembleOptions(String, Enum):
     nvt = 'nvt'
     nvt_i = 'nvt-i'
     nvt_a = 'nvt-a'
@@ -44,8 +44,8 @@ class DynaCatMdArgs(DFlowOptions):
     deepmd_model: InputFilePath = Field(
         description="Deepmd model file for LAMMPS simulation")
 
-    ensemble: EnsableOptions = Field(
-        default=EnsableOptions.csvr,
+    ensemble: EnsembleOptions = Field(
+        default=EnsembleOptions.csvr,
         description='Ensemble of LAMMPS simulation')
 
     temperature: Float = Field(
@@ -74,13 +74,13 @@ class DynaCatMdArgs(DFlowOptions):
         description='Sampling frequency of LAMMPS simulation')
 
     extra_args: Dict[String, Float] = Field(
-        title='Other Arguments',
+        title='Extra Arguments',
         default={
             'tau_t': 0.1,
             'tau_p': 0.5,
             'time_const': 0.1,
         },
-        description="Other arguments for LAMMPS simulation, e.g. tau_t, tau_p, time_const, etc. Don't remove or add extra arguments if you are not sure about it."
+        description="Extra arguments for LAMMPS simulation, e.g. tau_t, tau_p, time_const, etc. Don't remove or add extra arguments if you are not sure about it."
     )
 
     output_dir : OutputDirectory = Field(
