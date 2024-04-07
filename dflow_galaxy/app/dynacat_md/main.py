@@ -12,6 +12,7 @@ from ai2_kit.core.util import dump_text, dump_json
 from pathlib import Path
 import shutil
 import sys
+import os
 
 
 logger = get_logger(__name__)
@@ -92,20 +93,22 @@ def launch_app(args: DynaCatMdArgs) -> int:
     shutil.copy(args.deepmd_model, 'dp-model.pb')
     dump_text(args.plumed_config, 'plumed.inp')
 
-    config_builder.load_system(args.system_file).gen_lammps_input(
+    logger.info(f'type of system_file: {type(args.system_file)}')
+    config_builder.load_system(str(args.system_file)).gen_lammps_input(
         out_dir=args.output_dir,
         nsteps=args.steps,
         temp=args.temperature,
         sample_freq=args.sample_freq,
         pres=args.pressure,
         abs_path=False,
+        ensemble=args.ensemble,
         dp_models=['dp-model.pb'],
         **args.other_args,
     )
 
-    shutil.move('lammps.inp', args.output_dir)
-    shutil.move('lammps.dat', args.output_dir)
+    os.makedirs(args.output_dir, exist_ok=True)
     shutil.move('plumed.inp', args.output_dir)
+    shutil.move('dp-model.pb', args.output_dir)
     if args.dry_run:
         return 0
 

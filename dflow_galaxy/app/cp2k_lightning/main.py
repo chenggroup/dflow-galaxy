@@ -146,7 +146,7 @@ def launch_app(args: Cp2kLightningArgs) -> int:
     # create a closure to generate cp2k input file
     def _gen_cp2k_input(out_dir: str, aimd: bool):
         config_builder = ai2cat.ConfigBuilder()
-        config_builder.load_system(args.system_file).gen_cp2k_input(
+        config_builder.load_system(str(args.system_file)).gen_cp2k_input(
             out_dir=out_dir,
             aimd=aimd,
             # common options
