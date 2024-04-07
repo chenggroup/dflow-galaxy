@@ -38,6 +38,10 @@ class DynaCatMdArgs(DFlowOptions):
     system_file: InputFilePath = Field(
         description="A system file as the initial structure of LAMMPS simulation")
 
+    # TODO: support multiple deepmd models
+    deepmd_model: InputFilePath = Field(
+        description="Deepmd model file for LAMMPS simulation")
+
     ensemble: EnsableOptions = Field(
         default=EnsableOptions.csvr,
         description='Ensemble of LAMMPS simulation')
@@ -85,34 +89,23 @@ class DynaCatMdArgs(DFlowOptions):
 def launch_app(args: DynaCatMdArgs) -> int:
     config_builder = ai2cat.ConfigBuilder()
 
-    # kwargs = {
-    #     'nsteps': 20000,
-    #     'stepsize': 0.0005,
-    #     'temp': 330,
-    #     'sample_freq': 10,
-    #     'pres': -1,
-    #     'tau_t': 0.1,
-    #     'tau_p': 0.5,
-    #     'time_const': 0.1,
-    #     'model_devi_out': 'model_devi.out',
-    #     'dump_out': 'traj.lammpstrj',
-    #     'energy_out': 'energy.log',
-    #     'data_file': 'lammps.dat',
-    #     'lammps_file': 'lammps.inp',
-    #     'plumed_file': 'plumed.inp',
-    #     'plumed_out': 'plumed.out',
-    # }
-
+    shutil.copy(args.deepmd_model, 'dp-model.pb')
     dump_text(args.plumed_config, 'plumed.inp')
+
     config_builder.load_system(args.system_file).gen_lammps_input(
         out_dir=args.output_dir,
         nsteps=args.steps,
         temp=args.temperature,
         sample_freq=args.sample_freq,
         pres= args.pressure,
+        abs_path=False,
+        dp_models=['dp-model.pb'],
         **args.other_args,
     )
 
+    shutil.move('lammps.inp', args.output_dir)
+    shutil.move('lammps.dat', args.output_dir)
+    shutil.move('plumed.inp', args.output_dir)
     if args.dry_run:
         return 0
 
