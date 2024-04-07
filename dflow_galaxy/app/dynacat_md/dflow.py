@@ -45,7 +45,7 @@ def run_lammps_workflow(input_dir: str,
         )
     )
 
-    dflow_builder.s3_upload(input_dir, 'lammps')
+    dflow_builder.s3_upload(input_dir, 'lammps_input')
     lammps_executor = dispatcher.create_bohrium_dispatcher(bohrium_config, lammps_res)
     lammps_fn = RunLammpsFn(lammps_script=lammps_script)
     lammps_step = dflow_builder.make_bash_step(lammps_fn, executor=lammps_executor)(

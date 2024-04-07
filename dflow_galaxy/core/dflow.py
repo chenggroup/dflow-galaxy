@@ -471,13 +471,15 @@ class DFlowBuilder:
         df_steps = _to_dflow_steps(steps)
         self.workflow.add(df_steps)
 
-    def run(self):
+    def run(self, raise_on_failed=True):
         """
         Run the workflow.
         """
         self.workflow.submit()
         try:
             self.workflow.wait()
+            if self.workflow.query_status() != 'Succeeded' and raise_on_failed:
+                raise RuntimeError(f'workflow {self.name} failed')
         finally:
             if self._debug:
                 resolve_ln(self.s3_base_prefix, mv=True)
