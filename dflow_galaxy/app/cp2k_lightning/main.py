@@ -146,7 +146,7 @@ def launch_app(args: Cp2kLightningArgs) -> int:
     # create a closure to generate cp2k input file
     def _gen_cp2k_input(out_dir: str, aimd: bool):
         config_builder = ai2cat.ConfigBuilder()
-        config_builder.load_system(str(args.system_file)).gen_cp2k_input(
+        config_builder.load_system(args.system_file.get_full_path()).gen_cp2k_input(
             out_dir=out_dir,
             aimd=aimd,
             # common options
@@ -172,18 +172,14 @@ def launch_app(args: Cp2kLightningArgs) -> int:
         return 0
 
     # stage 2: run cp2k with dflow
-    try:
-        setup_dflow_context(args)
-        run_cp2k_workflow(
-            input_dir=str(out_dir),
-            out_dir=str(args.output_dir),
-            cp2k_device_model=str(args.cp2k_device_model),
-            cp2k_image=str(args.cp2k_image),
-            cp2k_script=str(args.cp2k_script),
-        )
-    except Exception:
-        logger.exception('unexpected error when running dflow')
-        return 1
+    setup_dflow_context(args)
+    run_cp2k_workflow(
+        input_dir=str(args.output_dir),
+        out_dir=str(args.output_dir),
+        cp2k_device_model=str(args.cp2k_device_model),
+        cp2k_image=str(args.cp2k_image),
+        cp2k_script=str(args.cp2k_script),
+    )
     return 0
 
 def main():
@@ -191,7 +187,6 @@ def main():
         Cp2kLightningArgs,
         launch_app,
         version="0.1.0",
-        exception_handler=default_minimal_exception_handler
     )(sys.argv[1:])
 
 

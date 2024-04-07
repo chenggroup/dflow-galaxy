@@ -3,7 +3,6 @@ from dp.launching.typing import Int, String, Enum, Float, Boolean
 from dp.launching.cli import to_runner, default_minimal_exception_handler
 
 from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context
-from dflow_galaxy.res import get_cp2k_data_dir
 from dflow_galaxy.core.log import get_logger
 from ai2_kit.feat import catalysis as ai2cat
 from ai2_kit.core.util import dump_text, dump_json
@@ -14,8 +13,10 @@ import shutil
 import sys
 import os
 
+from .dflow import run_lammps_workflow
 
 logger = get_logger(__name__)
+
 
 class EnsableOptions(String, Enum):
     nvt = 'nvt'
@@ -72,7 +73,7 @@ class DynaCatMdArgs(DFlowOptions):
         default=10,
         description='Sampling frequency of LAMMPS simulation')
 
-    other_args: Dict[String, Float] = Field(
+    extra_args: Dict[String, Float] = Field(
         title='Other Arguments',
         default={
             'tau_t': 0.1,
@@ -86,6 +87,23 @@ class DynaCatMdArgs(DFlowOptions):
         default='./output',
         description="Output directory of LAMMPS simulation")
 
+    lammps_image: String = Field(
+        default='registry.dp.tech/dptech/dpmd:2.2.8-cuda11.8',
+        description="Docker image for running LAMMPS simulation")
+
+    lammps_device_model: String = Field(
+        default='c8_m32_1 * NVIDIA V100',
+        description="Device model for LAMMPS simulation")
+
+    lammps_script: String = Field(
+        default= '\n'.join([
+            '# LAMMPS input can be referenced as lammps.inp',
+            '# Note that different container may have different setup',
+            'lmp -in lammps.inp &> lammps.out',
+        ]),
+        format='multi-line',
+        description="Script to run LAMMPS simulation, note that it depends on the docker image")
+
 
 def launch_app(args: DynaCatMdArgs) -> int:
     config_builder = ai2cat.ConfigBuilder()
@@ -94,7 +112,7 @@ def launch_app(args: DynaCatMdArgs) -> int:
     dump_text(args.plumed_config, 'plumed.inp')
 
     logger.info(f'type of system_file: {type(args.system_file)}')
-    config_builder.load_system(str(args.system_file)).gen_lammps_input(
+    config_builder.load_system(args.system_file.get_full_path()).gen_lammps_input(
         out_dir=args.output_dir,
         nsteps=args.steps,
         temp=args.temperature,
@@ -103,14 +121,22 @@ def launch_app(args: DynaCatMdArgs) -> int:
         abs_path=False,
         ensemble=args.ensemble,
         dp_models=['dp-model.pb'],
-        **args.other_args,
+        **args.extra_args,
     )
-
-    os.makedirs(args.output_dir, exist_ok=True)
     shutil.move('plumed.inp', args.output_dir)
     shutil.move('dp-model.pb', args.output_dir)
+
     if args.dry_run:
         return 0
+
+    setup_dflow_context(args)
+    run_lammps_workflow(
+        input_dir=str(args.output_dir),
+        out_dir=str(args.output_dir),
+        lammps_image=str(args.lammps_image),
+        lammps_device_model=str(args.lammps_device_model),
+        lammps_script=str(args.lammps_script),
+    )
 
     return 0
 
@@ -120,7 +146,6 @@ def main():
         DynaCatMdArgs,
         launch_app,
         version="0.1.0",
-        exception_handler=default_minimal_exception_handler
     )(sys.argv[1:])
 
 
