@@ -14,31 +14,60 @@ import sys
 
 logger = get_logger(__name__)
 
-class DeepmdDataset(BaseModel):
 
-    data_file : InputFilePath = Field(
-        description="Deepmd dataset file in hfs5 format")
+class DeepmdSettings(BaseModel):
+    dataset : InputFilePath = Field(
+        description="DeepMD dataset folder in npy format")
 
-    limit_size: Int = Field(
+    dataset_limit: Int = Field(
         default=0,
-        description="Limit the size of the dataset, 0 means no limit")
+        description="If the dataset is too large, you can use this parameter to limit the size of the dataset, 0 means no limit")
+
+    image: String = Field(
+        default='registry.dp.tech/dptech/dpmd:2.2.8-cuda11.8',
+        description="Docker image for running DeepMD training")
+
+    device_model: String = Field(
+        default='c8_m32_1 * NVIDIA V100',
+        description="Device model for DeepMD training")
+
+    concurrency: Int = Field(
+        default=5,
+        description="Number of concurrent run")
+
+    cmd: String = Field(
+        default='dp',
+        description="Command to run DeepMD, note that it depends on the docker image you used")
 
 
-class ExploreDataset(BaseModel):
-    data_file: InputFilePath = Field(
-        description="Structure file in xyz format")
+class LammpsSetting(BaseModel):
+    systems: InputFilePath = Field(
+        description="Structure file in xyz format use for LAMMPS simulation")
 
-    limit_size: Int = Field(
+    systems_limit: Int = Field(
         default=0,
-        description="Limit the size of the dataset, 0 means no limit")
+        description="If the system file is too large, you can use this parameter to limit the structure in systems, 0 means no limit")
 
 
 class Cp2kSettings(BaseModel):
     input_template: InputFilePath = Field(
         description="Input template file for CP2K simulation")
 
+    image: String = Field(
+        default='registry.dp.tech/dptech/cp2k:11',
+        description="Docker image for running CP2K simulation")
 
+    device_model: String = Field(
+        default='c32_m64_cpu',
+        description="Device model for CP2K simulation")
 
+    concurrency: Int = Field(
+        default=5,
+        description="Number of concurrent run")
+
+    cmd: String = Field(
+        default='mpirun -np 32 cp2k.popt',
+        description="Script to run CP2K simulation, note that it depends on the docker image")
 
 
 class DynacatTeslaArgs(DFlowOptions):
@@ -47,11 +76,14 @@ class DynacatTeslaArgs(DFlowOptions):
         default = True,
         description="Generate configuration file without running the simulation")
 
-    deepmd_dataset: DeepmdDataset = Field(
-        description="Deepmd dataset for training")
+    deepmd: DeepmdSettings = Field(
+        description="DeepMD settings for training")
 
-    explore_dataset: ExploreDataset = Field(
-        description="Structure dataset for exploring")
+    lammps: LammpsSetting = Field(
+        description="LAMMPS settings for structure exploration")
+
+    cp2k: Cp2kSettings = Field(
+        description="CP2K settings for DFT labeling")
 
 
 
