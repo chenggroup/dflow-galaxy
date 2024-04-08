@@ -33,6 +33,13 @@ class ExploreDataset(BaseModel):
         description="Limit the size of the dataset, 0 means no limit")
 
 
+class Cp2kSettings(BaseModel):
+    input_template: InputFilePath = Field(
+        description="Input template file for CP2K simulation")
+
+
+
+
 
 class DynacatTeslaArgs(DFlowOptions):
 
@@ -45,6 +52,9 @@ class DynacatTeslaArgs(DFlowOptions):
 
     explore_dataset: ExploreDataset = Field(
         description="Structure dataset for exploring")
+
+
+
 
 
 def launch_app(args: DynacatTeslaArgs) -> int:
