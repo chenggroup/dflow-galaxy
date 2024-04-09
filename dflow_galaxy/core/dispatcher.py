@@ -1,4 +1,6 @@
 from .pydantic import BaseModel
+from pydantic import Field
+
 
 from typing import Optional
 from urllib.parse import urlparse
@@ -7,9 +9,9 @@ import os
 
 class BohriumInputData(BaseModel):
     image_name: str
+    scass_type: str = 'c2_m4_cpu'
     job_type: str = 'container'
     platform: str = 'ali'
-    scass_type: str = 'c2_m4_cpu'
     job_name: str = 'bohrium_job'
     disk_size: int = 20  # in GB
 
