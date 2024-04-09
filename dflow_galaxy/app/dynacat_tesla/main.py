@@ -16,6 +16,7 @@ import ase.io
 from pathlib import Path
 from uuid import uuid4
 import shutil
+import glob
 import sys
 import os
 
@@ -61,7 +62,7 @@ class ExploreItem(BaseModel):
 class DeepmdSettings(BaseModel):
     dataset : InputFilePath = Field(
         title='DeepMD Dataset',
-        description="DeepMD dataset folder in npy format")
+        description="DeepMD in zip or tgz format")
 
     input_template: InputFilePath = Field(
         title='DeepMD Input Template',
@@ -196,15 +197,41 @@ class DynacatTeslaArgs(DFlowOptions):
         default='./output',
         description="Output directory of LAMMPS simulation")
 
+    deepmd_resource: Dict[String, String] = Field(
+        default=BH_DEEPMD_DEFAULT,
+        description="Resource configuration for DeepMD")
+
+    lammps_resource: Dict[String, String] = Field(
+        default=BH_LAMMPS_DEFAULT,
+        description="Resource configuration for LAMMPS")
+
+    cp2k_resource: Dict[String, String] = Field(
+        default=BH_CP2K_DEFAULT,
+        description="Resource configuration for CP2K")
+
+    python_resource: Dict[String, String] = Field(
+        default=BH_PYTHON_DEFAULT,
+        description="Resource configuration for Python")
+
 
 def launch_app(args: DynacatTeslaArgs) -> int:
     s3_prefix = args.s3_prefix or f'dynacat-{uuid4()}'
     logger.info(f'using s3 prefix: {s3_prefix}')
     tesla_template = get_res_path() / 'dynacat' / 'tesla_template.yml'
+    # handle deepmd dataset
+    dp_dataset_file = args.deepmd.dataset.get_full_path()
+    dp_dataset = _unpack_dpdata(dp_dataset_file, 'init-dataset')
+    dp_dataset_config = {}
+    for i, d in enumerate(dp_dataset):
+        dp_dataset_config[f'dpdata-{i}'] = {
+            'url': d,
+        }
+    logger.info(f'Unpacked dpdata to {dp_dataset}')
 
+    # build config
     shutil.copy(tesla_template, 'tesla-preset.yml')
     executor_config = _get_executor_config(args)
-    workflow_config = _get_workflow_config(args)
+    workflow_config = _get_workflow_config(args, dp_dataset_config)
 
     # TODO: use yaml to dump config pretty
     dump_json(executor_config, 'tesla-executor.yml')
@@ -238,12 +265,12 @@ def _get_executor_config(args: DynacatTeslaArgs):
                 'apps': {
                     'python': {
                         'resource': {
-                            'bohrium': BH_PYTHON_DEFAULT,
+                            'bohrium': args.python_resource,
                         }
                     },
                     'deepmd': {
                         'resource': {
-                            'bohrium': BH_DEEPMD_DEFAULT,
+                            'bohrium': args.deepmd_resource,
                         },
                         'dp_cmd': args.deepmd.cmd,
                         'concurrency': args.deepmd.concurrency,
@@ -251,14 +278,14 @@ def _get_executor_config(args: DynacatTeslaArgs):
                     },
                     'lammps': {
                         'resource': {
-                            'bohrium': BH_LAMMPS_DEFAULT,
+                            'bohrium': args.lammps_resource,
                         },
                         'lammps_cmd': args.lammps.cmd,
                         'concurrency': args.lammps.concurrency,
                     },
                     'cp2k': {
                         'resource': {
-                            'bohrium': BH_CP2K_DEFAULT,
+                            'bohrium': args.cp2k_resource,
                         },
                         'cp2k_cmd': args.cp2k.cmd,
                         'concurrency': args.cp2k.concurrency,
@@ -275,7 +302,7 @@ def _get_executor_config(args: DynacatTeslaArgs):
     }
 
 
-def _get_workflow_config(args: DynacatTeslaArgs):
+def _get_workflow_config(args: DynacatTeslaArgs, dp_dataset_config: dict):
     # process system file
     explore_data_file = args.lammps.system_file.get_full_path()
     atoms = ase.io.read(explore_data_file, index=0)
@@ -287,10 +314,7 @@ def _get_workflow_config(args: DynacatTeslaArgs):
 
     return {
         'datasets': {
-            'train-data': {
-                'url': args.deepmd.dataset.get_full_path(),
-                'format': 'deepmd/npy',
-            },
+            **dp_dataset_config,
             'explore-data': {
                 'url': explore_data_file,
             },
@@ -302,7 +326,7 @@ def _get_workflow_config(args: DynacatTeslaArgs):
             },
             'train': {
                 'deepmd': {
-                    'init_dataset': ['train-data'],
+                    'init_dataset': dp_dataset_config.keys(),
                     'input_template': deepmd_template,
                     'compress_model': args.deepmd.compress_model,
                 }
@@ -350,6 +374,15 @@ def _get_lammps_vars(explore_vars: List[ExploreItem]):
 
 def _parse_string_array(s: str, dtype=float, delimiter=','):
     return [dtype(x) for x in s.split(delimiter)]
+
+
+def _unpack_dpdata(file: str, extract_dir: str):
+    extract_dir = os.path.normpath(extract_dir)
+    os.makedirs(extract_dir, exist_ok=True)
+    shutil.unpack_archive(file, extract_dir=extract_dir)
+    # use type.raw to locate the dpdata folder
+    paths = glob.glob(f'{extract_dir}/**/type.raw', recursive=True)
+    return [ os.path.dirname(p) for p in paths]
 
 
 def main():
