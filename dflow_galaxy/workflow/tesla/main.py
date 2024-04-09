@@ -27,6 +27,11 @@ class RuntimeContext:
 
 
 def run_tesla(*config_files: str, s3_prefix: str, debug: bool = False, skip: bool = False, max_iters: int = 1):
+    builder = build_tesla_workflow(*config_files, s3_prefix=s3_prefix, debug=debug, skip=skip, max_iters=max_iters)
+    builder.run()
+
+
+def build_tesla_workflow(*config_files: str, s3_prefix: str, debug: bool = False, skip: bool = False, max_iters: int = 1):
     config_raw = load_yaml_files(*config_files)
     config = TeslaConfig(**config_raw)
     config.init()
@@ -161,7 +166,9 @@ def run_tesla(*config_files: str, s3_prefix: str, debug: bool = False, skip: boo
                 raw_workflow_cfg['workflow']['update'] = None  # clean the old update config
                 raw_workflow_cfg = merge_dict(raw_workflow_cfg, workflow_cfg.update.patch)
 
-    builder.run()
+    return builder
+
+
 
 
 cmd_entry = CmdGroup({

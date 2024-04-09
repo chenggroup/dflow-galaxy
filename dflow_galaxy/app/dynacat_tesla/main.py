@@ -6,7 +6,7 @@ from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context, EnsembleO
 from dflow_galaxy.res import get_res_path
 from dflow_galaxy.core.log import get_logger
 
-from dflow_galaxy.workflow.tesla.main import run_tesla
+from dflow_galaxy.workflow.tesla.main import build_tesla_workflow
 
 from ai2_kit.core.util import dump_json, load_text, load_json
 from ai2_kit.feat import catalysis as ai2cat
@@ -17,6 +17,7 @@ from pathlib import Path
 from uuid import uuid4
 import shutil
 import sys
+import os
 
 
 logger = get_logger(__name__)
@@ -28,6 +29,16 @@ class KvItem(BaseModel):
     value: String = Field(
         format='multi-line',
         description="Value of the item")
+
+
+class ExploreItem(BaseModel):
+    key: String = Field(
+        description="Key of the item")
+    value: String = Field(
+        description="Value of the item, multiple value should be separated by comma")
+    broadcast: Boolean = Field(
+        default=False,
+        description="Use broadcast instead of full combination")
 
 
 class DeepmdSettings(BaseModel):
@@ -68,6 +79,13 @@ class LammpsSetting(BaseModel):
 
     plumed_config: String = Field(
         description='Plumed configuration file for metadynamics simulation')
+
+    explore_vars: List[ExploreItem] = Field(
+        default=[
+           ExploreItem(key='TEMP', value='50,100,200,300,400,600,800,1000', broadcast=False),
+           ExploreItem(key='PRES', value='1', broadcast=False),
+        ],
+        description="Variables for LAMMPS exploration, TEMP, PRES are required, you may also add TAU_T, TAU_P, etc")
 
     template_vars: List[KvItem] = Field(
         default=[
@@ -159,6 +177,10 @@ class DynacatTeslaArgs(DFlowOptions):
         default = True,
         description="Generate configuration file without running the simulation")
 
+    max_iters: Int = Field(
+        default = 7,
+        description="Maximum iterations of the workflow")
+
     s3_prefix: Optional[String] = Field(
         description="Specify the S3 prefix of DFlow. By default a random prefix will be used for different jobs. Jobs use the same prefix will share the same working directory, which allow you to inherit the state of previous run.")
 
@@ -193,20 +215,28 @@ def launch_app(args: DynacatTeslaArgs) -> int:
     tesla_template = get_res_path() / 'dynacat' / 'tesla_template.yml'
 
     shutil.copy(tesla_template, 'tesla-preset.yml')
-
     executor_config = _get_executor_config(args)
     workflow_config = _get_workflow_config(args)
 
+    # TODO: use yaml to dump config pretty
     dump_json(executor_config, 'tesla-executor.yml')
     dump_json(workflow_config, 'tesla-workflow.yml')
+
+    # copy generated configuration to output
+    os.makedirs(args.output_dir, exist_ok=True)
+    os.system(f'cp tesla-*.yml {args.output_dir}')
 
     if args.dry_run:
         logger.info('Skip running workflow due to dry_run is set to True')
         return 0
 
     setup_dflow_context(args)
-
-    # run_tesla()
+    workflow = build_tesla_workflow('tesla-preset.yml', 'tesla-executor.yml', 'tesla-workflow.yml',
+                                    s3_prefix=s3_prefix, max_iters=args.max_iters)
+    try:
+        workflow.run()
+    finally:
+        ...
 
     return 0
 
@@ -264,6 +294,7 @@ def _get_workflow_config(args: DynacatTeslaArgs):
 
     cp2k_input_template = load_text(args.cp2k.input_template.get_full_path())
     deepmd_template = load_json(args.deepmd.input_template.get_full_path())
+    product_vars, broadcast_vars = _get_lammps_vars(args.lammps.explore_vars)
 
     return {
         'datasets': {
@@ -296,6 +327,8 @@ def _get_workflow_config(args: DynacatTeslaArgs):
                     'sample_freq': args.lammps.sample_freq,
                     'no_pbc': args.lammps.no_pbc,
                     'plumed_config': args.lammps.plumed_config,
+                    'product_vars': product_vars,
+                    'broadcast_vars': broadcast_vars,
                     'template_vars': dict((item.key, item.value) for item in args.lammps.template_vars),
                 }
             },
@@ -313,6 +346,21 @@ def _get_workflow_config(args: DynacatTeslaArgs):
             },
         }
     }
+
+
+def _get_lammps_vars(explore_vars: List[ExploreItem]):
+    broadcast_vars = {}
+    product_vars = {}
+    for item in explore_vars:
+        if item.broadcast:
+            broadcast_vars[item.key] = _parse_string_array(item.value, dtype=float)
+        else:
+            product_vars[item.key] = _parse_string_array(item.value, dtype=float)
+    return product_vars, broadcast_vars
+
+
+def _parse_string_array(s: str, dtype=float, delimiter=','):
+    return [dtype(x) for x in s.split(delimiter)]
 
 
 def main():
