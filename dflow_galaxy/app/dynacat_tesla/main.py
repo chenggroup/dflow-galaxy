@@ -342,7 +342,7 @@ def _get_workflow_config(args: DynacatTeslaArgs, dp_dataset_config: dict):
                     'timestep': args.lammps.timestep,
                     'sample_freq': args.lammps.sample_freq,
                     'no_pbc': args.lammps.no_pbc,
-                    'plumed_config': args.lammps.plumed_config,
+                    'plumed_config': args.lammps.plumed_config or None,
                     'product_vars': product_vars,
                     'broadcast_vars': broadcast_vars,
                     'template_vars': dict((item.key, item.value) for item in args.lammps.template_vars),
