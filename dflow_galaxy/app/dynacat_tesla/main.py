@@ -292,6 +292,10 @@ def _get_executor_config(args: DynacatTeslaArgs):
                         },
                         'cp2k_cmd': args.cp2k.cmd,
                         'concurrency': args.cp2k.concurrency,
+                        'setup_script': '\n'.join([
+                            # guess cp2k data dir
+                            '[[ -z "${CP2K_DATA_DIR}" ]] && export CP2K_DATA_DIR="$(dirname "$(which cp2k)")/../../data" || true',
+                        ])
                     }
                 }
             }
