@@ -43,8 +43,8 @@ def build_tesla_workflow(*config_files: str, s3_prefix: str, debug: bool = False
 
     # ensure the existence of the placeholder files or else argo will raise 404 error
     # this can not be tested in debug mode
-    builder.s3_dump('', 'init-systems/.placeholder')
     builder.s3_dump('', 'init-dataset/.placeholder')
+    builder.s3_dump('', 'iter-dataset/.placeholder')
 
     raw_workflow_cfg = config.workflow
     for iter_num in range(max_iters):
