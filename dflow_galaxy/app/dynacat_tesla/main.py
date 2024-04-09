@@ -250,6 +250,9 @@ def launch_app(args: DynacatTeslaArgs) -> int:
                                     s3_prefix=s3_prefix, max_iters=args.max_iters)
     try:
         workflow.run()
+    except:
+        logger.exception('Failed to run workflow')
+        return 1
     finally:
         # reclaim useful data
         workflow.s3_download('iter-dataset', args.output_dir)
