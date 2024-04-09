@@ -6,10 +6,12 @@ from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context, EnsembleO
 from dflow_galaxy.res import get_res_path
 from dflow_galaxy.core.log import get_logger
 
-from dflow_galaxy.workflow.tesla.main import run_tesla, TeslaConfig
+from dflow_galaxy.workflow.tesla.main import run_tesla
 
 from ai2_kit.core.util import dump_json, load_text, load_json
 from ai2_kit.feat import catalysis as ai2cat
+
+import ase.io
 
 from pathlib import Path
 from uuid import uuid4
@@ -57,8 +59,8 @@ class DeepmdSettings(BaseModel):
 
 
 class LammpsSetting(BaseModel):
-    systems: InputFilePath = Field(
-        description="Structure file in extxyz or POSCAR format use for LAMMPS simulation")
+    system_file: InputFilePath = Field(
+        description="Structure file in extxyz format use for LAMMPS simulation")
 
     ensemble: EnsembleOptions = Field(
         default=EnsembleOptions.csvr,
@@ -113,7 +115,6 @@ class LammpsSetting(BaseModel):
 
 
 class ModelDeviation(BaseModel):
-
     lo: Float = Field(
         default=0.1,
         description="Lower bound of the deviation")
@@ -199,7 +200,13 @@ def launch_app(args: DynacatTeslaArgs) -> int:
     dump_json(executor_config, 'tesla-executor.yml')
     dump_json(workflow_config, 'tesla-workflow.yml')
 
+    if args.dry_run:
+        logger.info('Skip running workflow due to dry_run is set to True')
+        return 0
+
     setup_dflow_context(args)
+
+    # run_tesla()
 
     return 0
 
@@ -250,7 +257,11 @@ def _get_executor_config(args: DynacatTeslaArgs):
 
 
 def _get_workflow_config(args: DynacatTeslaArgs):
-    explore_data = args.lammps.systems.get_full_path()
+    # process system file
+    explore_data_file = args.lammps.system_file.get_full_path()
+    atoms = ase.io.read(explore_data_file, index=0)
+    type_map, mass_map = ai2cat.get_type_map(atoms)  # type: ignore
+
     cp2k_input_template = load_text(args.cp2k.input_template.get_full_path())
     deepmd_template = load_json(args.deepmd.input_template.get_full_path())
 
@@ -261,13 +272,13 @@ def _get_workflow_config(args: DynacatTeslaArgs):
                 'format': 'deepmd/npy',
             },
             'explore-data': {
-                'url': explore_data,
+                'url': explore_data_file,
             },
         },
         'workflow': {
             'general': {
-                'type_map': [],
-                'mass_map': [],
+                'type_map': type_map,
+                'mass_map': mass_map,
             },
             'train': {
                 'deepmd': {
@@ -279,10 +290,11 @@ def _get_workflow_config(args: DynacatTeslaArgs):
             'explore':{
                 'lammps': {
                     'systems': ['explore-data'],
-                    'nsteps': 200000,
-                    'timestep': 0.0005,
-                    'sample_freq': 100,
-                    'no_pbc': False,
+                    'nsteps': args.lammps.nsteps,
+                    'ensemble': args.lammps.ensemble.value,
+                    'timestep': args.lammps.timestep,
+                    'sample_freq': args.lammps.sample_freq,
+                    'no_pbc': args.lammps.no_pbc,
                     'plumed_config': args.lammps.plumed_config,
                     'template_vars': dict((item.key, item.value) for item in args.lammps.template_vars),
                 }
