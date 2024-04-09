@@ -1,0 +1,43 @@
+workflow:
+  update:
+    until_iter: 1
+    patch:
+      explore:
+        lammps:
+          nsteps: 3000
+      update:
+        until_iter: 2
+        patch:
+          explore:
+            lammps:
+              nsteps: 5000
+          update:
+            until_iter: 3
+            patch:
+              explore:
+                lammps:
+                  nsteps: 10000
+              update:
+                until_iter: 4
+                patch:
+                  explore:
+                    lammps:
+                      nsteps: 20000
+                  update:
+                    until_iter: 5
+                    patch:
+                      explore:
+                        lammps:
+                          nsteps: 20000
+                      update:
+                        until_iter: 6
+                        patch:
+                          explore:
+                            lammps:
+                              nsteps: 50000
+                          update:
+                            until_iter: 7
+                            patch:
+                              explore:
+                                lammps:
+                                  nsteps: 100000
