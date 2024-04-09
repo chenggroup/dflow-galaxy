@@ -163,7 +163,7 @@ def build_tesla_workflow(*config_files: str, s3_prefix: str, debug: bool = False
                 logger.info('Updating workflow config at iter %d', iter_num)
                 # the patch is applied to the original config, not the updated one
                 raw_workflow_cfg = deepcopy(config.workflow)
-                raw_workflow_cfg['workflow']['update'] = None  # clean the old update config
+                raw_workflow_cfg['update'] = None  # clean the old update config
                 raw_workflow_cfg = merge_dict(raw_workflow_cfg, workflow_cfg.update.patch)
 
     return builder
