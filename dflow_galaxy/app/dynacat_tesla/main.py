@@ -23,6 +23,23 @@ import os
 logger = get_logger(__name__)
 
 
+BH_DEEPMD_DEFAULT = {
+    'image_name': 'registry.dp.tech/dptech/dpmd:2.2.8-cuda11.8',
+    'scass_type': 'c8_m32_1 * NVIDIA V100',
+}
+BH_LAMMPS_DEFAULT = BH_DEEPMD_DEFAULT
+
+BH_CP2K_DEFAULT = {
+    'image_name': 'registry.dp.tech/dptech/cp2k:11',
+    'scass_type': 'c32_m64_cpu',
+}
+
+BH_PYTHON_DEFAULT = {
+    'image_name': 'registry.dp.tech/dptech/prod-13325/dflow-galaxy:0.1.4-main-8bb98c7',
+    'scass_type': 'c2_m4_cpu',
+}
+
+
 class KvItem(BaseModel):
     key: String = Field(
         description="Key of the item")
@@ -43,9 +60,11 @@ class ExploreItem(BaseModel):
 
 class DeepmdSettings(BaseModel):
     dataset : InputFilePath = Field(
+        title='DeepMD Dataset',
         description="DeepMD dataset folder in npy format")
 
     input_template: InputFilePath = Field(
+        title='DeepMD Input Template',
         description="Input template file for DeepMD training")
 
     compress_model: Boolean = Field(
@@ -56,14 +75,6 @@ class DeepmdSettings(BaseModel):
         default=4,
         description="Number of concurrent run")
 
-    resource: Dict[String, String] = Field(
-        default={
-            'image_name': 'registry.dp.tech/dptech/dpmd:2.2.8-cuda11.8',
-            'scass_type': 'c8_m32_1 * NVIDIA V100',
-        },
-        description='Bohrium resource for DeepMD training, no need to change in most cases',
-    )
-
     cmd: String = Field(
         default='dp',
         description="Command to run DeepMD, note that it depends on the docker image you used")
@@ -71,13 +82,14 @@ class DeepmdSettings(BaseModel):
 
 class LammpsSetting(BaseModel):
     system_file: InputFilePath = Field(
-        description="Structure file in extxyz format use for LAMMPS simulation")
+        description="Structure file in xyz format use for LAMMPS simulation")
 
     ensemble: EnsembleOptions = Field(
         default=EnsembleOptions.csvr,
         description='Ensemble of LAMMPS simulation')
 
     plumed_config: String = Field(
+        format='multi-line',
         description='Plumed configuration file for metadynamics simulation')
 
     explore_vars: List[ExploreItem] = Field(
@@ -119,14 +131,6 @@ class LammpsSetting(BaseModel):
         default=5,
         description="Number of concurrent run")
 
-    resource: Dict[String, String] = Field(
-        default={
-            'image_name': 'registry.dp.tech/dptech/dpmd:2.2.8-cuda11.8',
-            'scass_type': 'c8_m32_1 * NVIDIA V100',
-        },
-        description='Bohrium resource for LAMMPS exploration, no need to change in most cases',
-    )
-
     cmd: String = Field(
         default='lmp',
         description="Command to run LAMMPS, note that it depends on the docker image you used")
@@ -134,11 +138,11 @@ class LammpsSetting(BaseModel):
 
 class ModelDeviation(BaseModel):
     lo: Float = Field(
-        default=0.1,
+        default=0.2,
         description="Lower bound of the deviation")
 
     hi: Float = Field(
-        default=0.5,
+        default=0.6,
         description="Upper bound of the deviation")
 
     metric: String = Field(
@@ -157,14 +161,6 @@ class Cp2kSettings(BaseModel):
     concurrency: Int = Field(
         default=5,
         description="Number of concurrent run")
-
-    resource: Dict[String, String] = Field(
-        default={
-            'image_name': 'registry.dp.tech/dptech/cp2k:11',
-            'scass_type': 'c32_m64_cpu',
-        },
-        description='Bohrium resource for CP2K simulation, no need to change in most cases',
-    )
 
     cmd: String = Field(
         default='mpirun -np 32 cp2k.popt',
@@ -199,14 +195,6 @@ class DynacatTeslaArgs(DFlowOptions):
     output_dir : OutputDirectory = Field(
         default='./output',
         description="Output directory of LAMMPS simulation")
-
-    python_resource: Dict[String, String] = Field(
-        default={
-            'image_name': 'registry.dp.tech/dptech/prod-13325/dflow-galaxy:0.1.4-main-8bb98c7',
-            'scass_type': 'c2_m4_cpu',
-        },
-        description='Bohrium resource for Python scripts, no need to change in most cases',
-    )
 
 
 def launch_app(args: DynacatTeslaArgs) -> int:
@@ -250,12 +238,12 @@ def _get_executor_config(args: DynacatTeslaArgs):
                 'apps': {
                     'python': {
                         'resource': {
-                            'bohrium': args.python_resource,
+                            'bohrium': BH_PYTHON_DEFAULT,
                         }
                     },
                     'deepmd': {
                         'resource': {
-                            'bohrium': args.deepmd.resource,
+                            'bohrium': BH_DEEPMD_DEFAULT,
                         },
                         'dp_cmd': args.deepmd.cmd,
                         'concurrency': args.deepmd.concurrency,
@@ -263,14 +251,14 @@ def _get_executor_config(args: DynacatTeslaArgs):
                     },
                     'lammps': {
                         'resource': {
-                            'bohrium': args.lammps.resource,
+                            'bohrium': BH_LAMMPS_DEFAULT,
                         },
                         'lammps_cmd': args.lammps.cmd,
                         'concurrency': args.lammps.concurrency,
                     },
                     'cp2k': {
                         'resource': {
-                            'bohrium': args.cp2k.resource,
+                            'bohrium': BH_CP2K_DEFAULT,
                         },
                         'cp2k_cmd': args.cp2k.cmd,
                         'concurrency': args.cp2k.concurrency,
