@@ -8,7 +8,7 @@ from dflow_galaxy.core.log import get_logger
 
 from dflow_galaxy.workflow.tesla.main import run_tesla, TeslaConfig
 
-from ai2_kit.core.util import dump_json, load_text
+from ai2_kit.core.util import dump_json, load_text, load_json
 from ai2_kit.feat import catalysis as ai2cat
 
 from pathlib import Path
@@ -32,8 +32,12 @@ class DeepmdSettings(BaseModel):
     dataset : InputFilePath = Field(
         description="DeepMD dataset folder in npy format")
 
-    input_template: Optional[InputFilePath] = Field(
-        description="Input template file for DeepMD training, use build-in template if not provided")
+    input_template: InputFilePath = Field(
+        description="Input template file for DeepMD training")
+
+    compress_model: Boolean = Field(
+        default=True,
+        description="Compress the model after training")
 
     concurrency: Int = Field(
         default=4,
@@ -75,6 +79,22 @@ class LammpsSetting(BaseModel):
         ],
         description="Template variables for LAMMPS exploration, you may need to modify this according to your system")
 
+    nsteps: Int = Field(
+        default=200000,
+        description='Number of steps of LAMMPS simulation')
+
+    timestep: Float = Field(
+        default=0.0005,
+        description='Time step size of LAMMPS simulation in ps')
+
+    sample_freq: Int = Field(
+        default=100,
+        description='Sampling frequency of LAMMPS simulation')
+
+    no_pbc: Boolean = Field(
+        default=False,
+        description='Whether to use periodic boundary condition')
+
     concurrency: Int = Field(
         default=5,
         description="Number of concurrent run")
@@ -110,6 +130,10 @@ class ModelDeviation(BaseModel):
 class Cp2kSettings(BaseModel):
     input_template: InputFilePath = Field(
         description="Input template file for CP2K simulation")
+
+    limit: Int = Field(
+        default=50,
+        description="Limit of the number of structures to be labeled for each iteration")
 
     concurrency: Int = Field(
         default=5,
@@ -166,13 +190,8 @@ def launch_app(args: DynacatTeslaArgs) -> int:
     s3_prefix = args.s3_prefix or f'dynacat-{uuid4()}'
     logger.info(f'using s3 prefix: {s3_prefix}')
     tesla_template = get_res_path() / 'dynacat' / 'tesla_template.yml'
-    if args.deepmd.input_template:
-        deepmd_template = args.deepmd.input_template.get_full_path()
-    else:
-        deepmd_template = get_res_path() / 'dynacat' / 'deepmd_template.json'
 
     shutil.copy(tesla_template, 'tesla-preset.yml')
-    shutil.copy(deepmd_template, 'deepmd.json')
 
     executor_config = _get_executor_config(args)
     workflow_config = _get_workflow_config(args)
@@ -180,9 +199,7 @@ def launch_app(args: DynacatTeslaArgs) -> int:
     dump_json(executor_config, 'tesla-executor.yml')
     dump_json(workflow_config, 'tesla-workflow.yml')
 
-
     setup_dflow_context(args)
-
 
     return 0
 
@@ -235,6 +252,7 @@ def _get_executor_config(args: DynacatTeslaArgs):
 def _get_workflow_config(args: DynacatTeslaArgs):
     explore_data = args.lammps.systems.get_full_path()
     cp2k_input_template = load_text(args.cp2k.input_template.get_full_path())
+    deepmd_template = load_json(args.deepmd.input_template.get_full_path())
 
     return {
         'datasets': {
@@ -253,27 +271,36 @@ def _get_workflow_config(args: DynacatTeslaArgs):
             },
             'train': {
                 'deepmd': {
-
+                    'init_dataset': ['train-data'],
+                    'input_template': deepmd_template,
+                    'compress_model': args.deepmd.compress_model,
                 }
             },
             'explore':{
                 'lammps': {
-
+                    'systems': ['explore-data'],
+                    'nsteps': 200000,
+                    'timestep': 0.0005,
+                    'sample_freq': 100,
+                    'no_pbc': False,
+                    'plumed_config': args.lammps.plumed_config,
+                    'template_vars': dict((item.key, item.value) for item in args.lammps.template_vars),
                 }
             },
             'screen':{
                 'model_devi': {
-
+                    'metric': args.model_deviation.metric,
+                    'decent_range': [args.model_deviation.lo, args.model_deviation.hi],
                 }
             },
             'label': {
                 'cp2k': {
                     'input_template': cp2k_input_template,
+                    'limit': args.cp2k.limit,
                 }
             },
         }
     }
-
 
 
 def main():
