@@ -89,7 +89,7 @@ class LammpsSetting(BaseModel):
         default=EnsembleOptions.csvr,
         description='Ensemble of LAMMPS simulation')
 
-    plumed_config: String = Field(
+    plumed_config: Optional[String] = Field(
         format='multi-line',
         description='Plumed configuration file for metadynamics simulation')
 
@@ -333,7 +333,7 @@ def _get_workflow_config(args: DynacatTeslaArgs, dp_dataset_config: dict):
             },
             'explore':{
                 'lammps': {
-                    'systems': ['explore-data'],
+                    'system_file': ['explore-data'],
                     'nsteps': args.lammps.nsteps,
                     'ensemble': args.lammps.ensemble.value,
                     'timestep': args.lammps.timestep,
