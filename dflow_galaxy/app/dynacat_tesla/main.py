@@ -326,7 +326,7 @@ def _get_workflow_config(args: DynacatTeslaArgs, dp_dataset_config: dict):
             },
             'train': {
                 'deepmd': {
-                    'init_dataset': dp_dataset_config.keys(),
+                    'init_dataset': list(dp_dataset_config.keys()),
                     'input_template': deepmd_template,
                     'compress_model': args.deepmd.compress_model,
                 }
