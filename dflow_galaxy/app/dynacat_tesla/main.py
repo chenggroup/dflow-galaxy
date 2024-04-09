@@ -336,7 +336,7 @@ def _get_workflow_config(args: DynacatTeslaArgs, dp_dataset_config: dict):
             },
             'explore':{
                 'lammps': {
-                    'system_file': ['explore-data'],
+                    'systems': ['explore-data'],
                     'nsteps': args.lammps.nsteps,
                     'ensemble': args.lammps.ensemble.value,
                     'timestep': args.lammps.timestep,
