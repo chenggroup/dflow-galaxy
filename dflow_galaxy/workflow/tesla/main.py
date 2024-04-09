@@ -15,14 +15,14 @@ from .domain.lib import StepSwitch, LabelApp, ExploreApp
 logger = get_logger(__name__)
 
 class RuntimeContext:
-    train_url: Optional[str]
+    train_url: Optional[str] = None
 
-    explore_url: Optional[str]
+    explore_url: Optional[str] = None
     explore_app: ExploreApp
 
-    screen_url: Optional[str]
+    screen_url: Optional[str] = None
 
-    label_url: Optional[str]
+    label_url: Optional[str] = None
     label_app: LabelApp
 
 
@@ -52,14 +52,13 @@ def build_tesla_workflow(*config_files: str, s3_prefix: str, debug: bool = False
 
         # Labeling
         cp2k_cfg = workflow_cfg.label.cp2k
-        if cp2k_cfg:
+
+        if cp2k_cfg and (iter_num > 0 or cp2k_cfg.init_systems):
             step_name = f'label-cp2k-iter-{iter_str}'
             runtime_ctx.label_app = 'cp2k'
             runtime_ctx.label_url = f's3://./label-cp2k/iter/{iter_str}'
-
             cp2k_executor = not_none(config.executors[not_none(config.orchestration.cp2k)])
-            if (iter_num > 0 or cp2k_cfg.init_systems) and \
-                    not step_switch.shall_skip(step_name):
+            if not step_switch.shall_skip(step_name):
                 if iter_num == 0:
                     assert cp2k_cfg.init_systems, 'init_systems should not be empty for first iteration'
                     assert runtime_ctx.screen_url is None, f'explore_url should be None for iter 0, actual: {runtime_ctx.screen_url}'
