@@ -23,7 +23,7 @@ class RuntimeContext:
     screen_url: Optional[str] = None
 
     label_url: Optional[str] = None
-    label_app: LabelApp
+    label_app: Optional[LabelApp] = None
 
 
 def run_tesla(*config_files: str, s3_prefix: str, debug: bool = False, skip: bool = False, max_iters: int = 1):
