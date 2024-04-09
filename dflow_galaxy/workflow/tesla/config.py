@@ -59,8 +59,6 @@ class WorkflowConfig(BaseModel):
     update: Optional[UpdateConfig] = None
 
 
-
-
 class TeslaConfig(BaseModel):
     executors: Mapping[str, TeslaExecutorConfig]
     orchestration: Orchestration
