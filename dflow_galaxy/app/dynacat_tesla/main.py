@@ -100,15 +100,15 @@ class LammpsSetting(BaseModel):
         description="Template variables for LAMMPS exploration, you may need to modify this according to your system")
 
     nsteps: Int = Field(
-        default=200000,
-        description='Number of steps of LAMMPS simulation')
+        default=1000,
+        description='Number of steps of LAMMPS simulation for the first iteration')
 
     timestep: Float = Field(
         default=0.0005,
         description='Time step size of LAMMPS simulation in ps')
 
     sample_freq: Int = Field(
-        default=100,
+        default=10,
         description='Sampling frequency of LAMMPS simulation')
 
     no_pbc: Boolean = Field(
@@ -236,8 +236,9 @@ def launch_app(args: DynacatTeslaArgs) -> int:
     try:
         workflow.run()
     finally:
-        ...
-
+        # reclaim useful data
+        workflow.s3_download('iter-dataset', args.output_dir)
+        workflow.s3_download('train-deepmd', args.output_dir)
     return 0
 
 
