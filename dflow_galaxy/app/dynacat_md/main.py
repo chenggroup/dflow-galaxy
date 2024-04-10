@@ -12,6 +12,8 @@ from pathlib import Path
 import shutil
 import sys
 import os
+import numpy as np
+import matplotlib.pyplot as plt
 
 from .dflow import run_lammps_workflow
 
@@ -87,6 +89,8 @@ class DynaCatMdArgs(DFlowOptions):
             '# LAMMPS input can be referenced as lammps.inp',
             '# Note that different container may have different setup',
             'lmp -in lammps.inp &> lammps.out',
+            '# Run plumed to calculate free energy surface',
+            'plumed sum_hills --hills HILLS --mintozero --outfile fes.dat'
         ]),
         format='multi-line',
         description="Script to run LAMMPS simulation, note that it depends on the docker image")
@@ -126,7 +130,14 @@ def launch_app(args: DynaCatMdArgs) -> int:
     )
 
     # TODO: generate report from data in lammps_output_dir
+    cv, fes = np.loadtxt(lammps_output_dir + '/fes.dat', unpack=True)
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
+    ax.plot(cv, fes, lw=2)
+    ax.set_xlabel(r'$CV$')
+    # unit is corresponding to the plumed unit
+    ax.set_ylabel(r'$Free \ energy$')
+    ax.set_title(r'$Free \ energy \ curve$')
 
     return 0
 
