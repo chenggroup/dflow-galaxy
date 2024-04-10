@@ -12,7 +12,7 @@ Generate CP2K input file from given structure and run AIMD task to generate shor
 
 ### App介绍
 
-CP2K Lightning基于AI4EC联合实验室开发的催化领域全自动基元反应势函数训练工作流[ai<sup>2</sup>-cat](https://github.com/chenggroup/ai2-kit)中生成CP2K AIMD任务的流程，结合dflow-galaxy对dflow的灵活封装演进而来。
+TESLA Lightning基于AI4EC联合实验室开发的催化领域全自动基元反应势函数训练工作流[ai<sup>2</sup>-cat](https://github.com/chenggroup/ai2-kit)中生成CP2K AIMD任务的流程，结合dflow-galaxy对dflow的灵活封装演进而来。
 用户可以上传一个结构初始文件，推荐为 `extxyz` 或者 `POSCAR` 格式，即包含对应原子的元素、位置坐标和周期性设置的结构，然后设定需要运行的CP2K任务和一些具体设置，如对角化算法、MD的时间步和步长、控温设置、基组、泛函等，并选择所需要的机型、镜像等，便可自助提交一个AIMD任务，用于后续研究。
 
 ### 使用手册
