@@ -21,7 +21,7 @@ Dynacat MD基于AI4EC联合实验室开发的催化领域全自动基元反应�
 
 - `dry_run`: 选择是否仅生成输入文件、不真正提交计算任务
 - `system_file` : 用于LAMMPS模拟的初始结构，需要包含元素种类、原子坐标、周期性设置，推荐使用 `extxyz` 或者 `POSCAR`
-- `deepmd_model` : 用于MD模拟的机器学习势函数模型文件
+- `deepmd_model` : 用于MD模拟的机器学习势函数模型文件, 可用另一应用 DynaCat TESLA 训练得到
 - `ensemble` : MD模拟使用的系综或者热浴，默认为 `csvr` ，即采用NVT系综并选用CSVR热浴
 - `temperature` : 设定的模拟温度，单位是K，默认是 330.0
 - `pressure` : 设定的模拟压力，选择NPT系综时需要设置，否则请保持为-1

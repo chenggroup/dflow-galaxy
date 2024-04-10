@@ -115,7 +115,9 @@ def bash_slice(in_var: str, n: int, i: SliceIndex, out_var: str,
     :param out_var: variable name to store the selected chunk
     """
     return f"""# bash_slice({in_var}, {n}, {i}, {out_var})
-{out_var}=$(_IN_DATA="${in_var}" _SLICE_N={n} _SLICE_I={i} {python_cmd} << EOF
+which python3 && PY_CMD=python3 || PY_CMD=python  # prefer python3
+which "{python_cmd}" && PY_CMD="{python_cmd}" || true  # prefer user specified python
+{out_var}=$(_IN_DATA="${in_var}" _SLICE_N={n} _SLICE_I={i} $PY_CMD << EOF
 import sys,os
 lines = os.environ['_IN_DATA'].split('\\n')
 n = int(os.environ['_SLICE_N'])
@@ -171,7 +173,7 @@ def resolve_ln(path: str, mv=False):
         for root, dirs, files in os.walk(path):
             for file in files:
                 file_path = os.path.join(root, file)
-                resolve_ln(file_path)
+                resolve_ln(file_path, mv=mv)
             for dir in dirs:
                 dir_path = os.path.join(root, dir)
-                resolve_ln(dir_path)
+                resolve_ln(dir_path, mv=mv)

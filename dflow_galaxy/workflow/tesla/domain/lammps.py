@@ -153,7 +153,7 @@ class RunLammpsTasksFn:
         c = self.context.concurrency
 
         script = [
-            f'mkdir -p {args.persist_dir}',
+            f'mkdir -p {args.persist_dir} && touch {args.persist_dir}/.placeholder',
             bash_inspect_dir(args.work_dir),
             f"pushd {args.work_dir}",
             bash_iter_ls_slice(

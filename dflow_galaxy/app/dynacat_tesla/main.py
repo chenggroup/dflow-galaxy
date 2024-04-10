@@ -60,13 +60,6 @@ class ExploreItem(BaseModel):
 
 
 class DeepmdSettings(BaseModel):
-    dataset : InputFilePath = Field(
-        title='DeepMD Dataset',
-        description="DeepMD in zip or tgz format")
-
-    input_template: InputFilePath = Field(
-        title='DeepMD Input Template',
-        description="Input template file for DeepMD training")
 
     compress_model: Boolean = Field(
         default=True,
@@ -87,9 +80,6 @@ class DeepmdSettings(BaseModel):
 
 
 class LammpsSetting(BaseModel):
-    system_file: InputFilePath = Field(
-        description="Structure file in xyz format use for LAMMPS simulation")
-
     ensemble: EnsembleOptions = Field(
         default=EnsembleOptions.csvr,
         description='Ensemble of LAMMPS simulation')
@@ -162,8 +152,6 @@ class ModelDeviation(BaseModel):
 
 
 class Cp2kSettings(BaseModel):
-    input_template: InputFilePath = Field(
-        description="Input template file for CP2K simulation")
 
     limit: Int = Field(
         default=50,
@@ -180,7 +168,7 @@ class Cp2kSettings(BaseModel):
     setup_script: String = Field(
         default = '\n'.join([
             '# guess cp2k data dir',
-            '[[ -z "${CP2K_DATA_DIR}" ]] && export CP2K_DATA_DIR="$(dirname "$(which cp2k)")/../../data" || true',
+            '[[ -z "${CP2K_DATA_DIR}" ]] && export CP2K_DATA_DIR="$(dirname "$(which cp2k || which cp2k.psmp)")/../../data" || true',
             'source /opt/cp2k-toolchain/install/setup',
         ]),
         format='multi-line',
@@ -188,6 +176,19 @@ class Cp2kSettings(BaseModel):
 
 
 class DynacatTeslaArgs(DFlowOptions):
+    deepmd_dataset : InputFilePath = Field(
+        title='DeepMD Dataset',
+        description="DeepMD in zip or tgz format")
+
+    deepmd_input_template: InputFilePath = Field(
+        title='DeepMD Input Template',
+        description="Input template file for DeepMD training")
+
+    lammps_system_file: InputFilePath = Field(
+        description="Structure file in xyz format use for LAMMPS simulation")
+
+    cp2k_input_template: InputFilePath = Field(
+        description="Input template file for CP2K simulation")
 
     dry_run: Boolean = Field(
         default = True,
@@ -238,7 +239,7 @@ def launch_app(args: DynacatTeslaArgs) -> int:
     logger.info(f'using s3 prefix: {s3_prefix}')
     tesla_template = get_res_path() / 'dynacat' / 'tesla_template.yml'
     # handle deepmd dataset
-    dp_dataset_file = args.deepmd.dataset.get_full_path()
+    dp_dataset_file = args.deepmd_dataset.get_full_path()
     dp_dataset = _unpack_dpdata(dp_dataset_file, 'init-dataset')
     dp_dataset_config = {}
     for i, d in enumerate(dp_dataset):
@@ -291,12 +292,12 @@ def _get_executor_config(args: DynacatTeslaArgs):
                 'apps': {
                     'python': {
                         'resource': {
-                            'bohrium': args.python_resource,
+                            'bohrium': {**args.python_resource, 'job_name':'dynacat_tesla_python'},
                         }
                     },
                     'deepmd': {
                         'resource': {
-                            'bohrium': args.deepmd_resource,
+                            'bohrium': {**args.deepmd_resource, 'job_name':'dynacat_tesla_deepmd'},
                         },
                         'dp_cmd': args.deepmd.cmd,
                         'concurrency': args.deepmd.concurrency,
@@ -304,7 +305,7 @@ def _get_executor_config(args: DynacatTeslaArgs):
                     },
                     'lammps': {
                         'resource': {
-                            'bohrium': args.lammps_resource,
+                            'bohrium': {**args.lammps_resource, 'job_name':'dynacat_tesla_lammps'},
                         },
                         'lammps_cmd': args.lammps.cmd,
                         'concurrency': args.lammps.concurrency,
@@ -312,7 +313,7 @@ def _get_executor_config(args: DynacatTeslaArgs):
                     },
                     'cp2k': {
                         'resource': {
-                            'bohrium': args.cp2k_resource,
+                            'bohrium': {**args.cp2k_resource, 'job_name': 'dynacat_tesla_cp2k'},
                         },
                         'cp2k_cmd': args.cp2k.cmd,
                         'concurrency': args.cp2k.concurrency,
@@ -332,13 +333,13 @@ def _get_executor_config(args: DynacatTeslaArgs):
 
 def _get_workflow_config(args: DynacatTeslaArgs, dp_dataset_config: dict):
     # process system file
-    explore_data_file = args.lammps.system_file.get_full_path()
+    explore_data_file = args.lammps_system_file.get_full_path()
     explore_data_key = os.path.basename(explore_data_file)
     atoms = ase.io.read(explore_data_file, index=0)
     type_map, mass_map = ai2cat.get_type_map(atoms)  # type: ignore
 
-    cp2k_input_template = load_text(args.cp2k.input_template.get_full_path())
-    deepmd_template = load_json(args.deepmd.input_template.get_full_path())
+    cp2k_input_template = load_text(args.cp2k_input_template.get_full_path())
+    deepmd_template = load_json(args.deepmd_input_template.get_full_path())
     product_vars, broadcast_vars = _get_lammps_vars(args.lammps.explore_vars)
 
     return {

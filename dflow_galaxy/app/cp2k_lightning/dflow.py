@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from dflow_galaxy.core import dflow, types, dispatcher
 import shutil
+import os
 
 
 @dataclass(frozen=True)
@@ -19,7 +20,7 @@ class RunCp2kFn:
         """
         script = [
             # guess cp2k data dir
-            '[[ -z "${CP2K_DATA_DIR}" ]] && export CP2K_DATA_DIR="$(dirname "$(which cp2k)")/../../data" || true',
+            '[[ -z "${CP2K_DATA_DIR}" ]] && export CP2K_DATA_DIR="$(dirname "$(which cp2k || which cp2k.psmp)")/../../data" || true',
             f'cd {args.input_dir}',
             self.cp2k_script,
             f'mkdir -p {args.output_dir}',
@@ -47,6 +48,7 @@ def run_cp2k_workflow(input_dir: str,
             image_name=cp2k_image,
             scass_type=cp2k_device_model,
             disk_size=100,
+            job_name='cp2k_lightning',
         )
     )
 
@@ -63,4 +65,5 @@ def run_cp2k_workflow(input_dir: str,
 
     # download artifacts to out_dir
     dflow_builder.s3_download('cp2k_output')
-    shutil.move('cp2k_output', f'{out_dir}/cp2k_output.tgz')
+    shutil.unpack_archive('cp2k_output', out_dir, format='gztar')
+    return os.path.join(out_dir, 'output_dir')

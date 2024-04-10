@@ -115,7 +115,7 @@ class RunCp2kTasksFn:
         c = self.context.concurrency
 
         script = [
-            f'mkdir -p {args.persist_dir}',
+            f'mkdir -p {args.persist_dir} && touch {args.persist_dir}/.placeholder',
             f"pushd {args.work_dir}",
             bash_inspect_dir('.'),
             bash_iter_ls_slice(

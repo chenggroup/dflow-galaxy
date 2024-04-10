@@ -12,7 +12,7 @@ class BohriumInputData(BaseModel):
     scass_type: str = 'c2_m4_cpu'
     job_type: str = 'container'
     platform: str = 'ali'
-    job_name: str = 'bohrium_job'
+    job_name: str = 'by_dflow_galaxy'
     disk_size: int = 20  # in GB
 
 

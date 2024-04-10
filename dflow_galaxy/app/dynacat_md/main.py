@@ -117,13 +117,16 @@ def launch_app(args: DynaCatMdArgs) -> int:
         return 0
 
     setup_dflow_context(args)
-    run_lammps_workflow(
+    lammps_output_dir = run_lammps_workflow(
         input_dir=str(args.output_dir),
         out_dir=str(args.output_dir),
         lammps_image=str(args.lammps_image),
         lammps_device_model=str(args.lammps_device_model),
         lammps_script=str(args.lammps_script),
     )
+
+    # TODO: generate report from data in lammps_output_dir
+
 
     return 0
 

@@ -6,10 +6,13 @@ from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context
 from dflow_galaxy.res import get_cp2k_data_dir
 from dflow_galaxy.core.log import get_logger
 from ai2_kit.feat import catalysis as ai2cat
+from ai2_kit.tool.ase import AseHelper
+from ai2_kit.tool.dpdata import DpdataHelper
 
 from pathlib import Path
 import shutil
 import sys
+import os
 
 from .dflow import run_cp2k_workflow
 
@@ -142,11 +145,12 @@ def launch_app(args: Cp2kLightningArgs) -> int:
     # don't use absolute path as the config file will be use in docker
     shutil.copy(basis_set_file, '.')
     shutil.copy(potential_file, '.')
+    system_file = args.system_file.get_full_path()
 
     # create a closure to generate cp2k input file
     def _gen_cp2k_input(out_dir: str, aimd: bool):
         config_builder = ai2cat.ConfigBuilder()
-        config_builder.load_system(args.system_file.get_full_path()).gen_cp2k_input(
+        config_builder.load_system(system_file).gen_cp2k_input(
             out_dir=out_dir,
             aimd=aimd,
             # common options
@@ -173,13 +177,26 @@ def launch_app(args: Cp2kLightningArgs) -> int:
 
     # stage 2: run cp2k with dflow
     setup_dflow_context(args)
-    run_cp2k_workflow(
+    cp2k_output_dir = run_cp2k_workflow(
         input_dir=str(args.output_dir),
         out_dir=str(args.output_dir),
         cp2k_device_model=str(args.cp2k_device_model),
         cp2k_image=str(args.cp2k_image),
         cp2k_script=str(args.cp2k_script),
     )
+
+    # stage 3: post-process cp2k output
+    # convert cp2k output to xyz file and dpdata set
+    AseHelper().read(
+        os.path.join(cp2k_output_dir, '*-pos-1.xyz')
+    ).set_by_ref(
+        system_file
+    ).write(str(out_dir / 'aimd.xyz' ))
+
+    DpdataHelper().read(
+        cp2k_output_dir, fmt='cp2kdata/md', cp2k_output_name='output'
+    ).write(str(out_dir / 'dp-dataset'))
+
     return 0
 
 def main():
