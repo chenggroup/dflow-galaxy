@@ -288,13 +288,14 @@ def launch_app(args: DynacatTeslaArgs) -> int:
         workflow.s3_download('iter-dataset', dp_dataset_dir)
         workflow.s3_download('train-deepmd', dp_models_dir)
         workflow.s3_download('screen-model-devi', model_devi_dir)
-        gen_report(dp_models_dir=dp_models_dir,
-                   model_devi_dir=model_devi_dir,
-                   max_iters=args.max_iters,
-                   output_dir=str(args.output_dir))
+        try:
+            gen_report(dp_models_dir=dp_models_dir,
+                    model_devi_dir=model_devi_dir,
+                    max_iters=args.max_iters,
+                    output_dir=str(args.output_dir))
+        except:
+            logger.exception('Failed to generate report')
     return 0
-
-
 
 
 def _get_executor_config(args: DynacatTeslaArgs):
@@ -424,8 +425,6 @@ def _unpack_dpdata(file: str, extract_dir: str):
     return [ os.path.dirname(p) for p in paths]
 
 
-
-
 def main():
     to_runner(
         DynacatTeslaArgs,
@@ -437,5 +436,5 @@ def main():
 if __name__ == "__main__":
     fire.Fire({
         'main': main,
-        'generate_report': gen_report,
+        'gen_report': gen_report,
     })

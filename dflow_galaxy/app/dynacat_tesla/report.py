@@ -137,8 +137,8 @@ def _load_model_devi_stats(file: str):
 
 
 def _gen_lcurve_echart(file: str):
-    series = _load_lcurve(file)
-    x = series.pop('step')
+    data_dict = _load_lcurve(file)
+    x = data_dict.pop('step')
     echart = {
         'tooltip': {
             'trigger': 'axis',
@@ -161,11 +161,11 @@ def _gen_lcurve_echart(file: str):
             }
         ],
         'legend': {
-            'data': [name for name in series.keys()],
+            'data': [name for name in data_dict.keys()],
         },
         'series': [],
     }
-    for name, data in series.items():
+    for name, data in data_dict.items():
         echart['series'].append({
             'name': name,
             'data': data,

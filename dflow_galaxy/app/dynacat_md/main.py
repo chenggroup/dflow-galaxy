@@ -14,6 +14,7 @@ import sys
 import os
 
 from .dflow import run_lammps_workflow
+from .report import gen_report
 
 logger = get_logger(__name__)
 
@@ -130,16 +131,10 @@ def launch_app(args: DynaCatMdArgs) -> int:
         lammps_script=str(args.lammps_script),
     )
 
-    # TODO: generate report from data in lammps_output_dir
-    cv, fes = np.loadtxt(lammps_output_dir + '/fes.dat', unpack=True)
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-
-    ax.plot(cv, fes, lw=2)
-    ax.set_xlabel(r'$CV$')
-    # unit is corresponding to the plumed unit
-    ax.set_ylabel(r'$Free \ energy$')
-    ax.set_title(r'$Free \ energy \ curve$')
-
+    try:
+        gen_report(lammps_output_dir, str(args.output_dir))
+    except:
+        logger.exception('Failed to generate report')
     return 0
 
 

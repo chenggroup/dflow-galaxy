@@ -4,6 +4,7 @@ import glob
 import os
 
 from dflow_galaxy.core.util import parse_string_array
+import fire
 
 
 def gen_report(lammps_output_dir: str,
@@ -11,36 +12,52 @@ def gen_report(lammps_output_dir: str,
     sections = []
     fes_file = os.path.join(lammps_output_dir, 'fes.dat')
 
+    element = ChartReportElement(
+        title='FES plot',
+        options=_gen_fes_echart(fes_file),
+    )
 
+    sections.append(ReportSection(
+        title='FES',
+        ncols=1,
+        elements=[element]
+    ))
 
     # write report
     report = Report(title='DynaCat MD', sections=sections)
     report.save(output_dir)
 
+
 def _gen_fes_echart(f: str):
-    data_points = _load_fes_data(f)
+    header, rows = _load_fes_data(f)
+
+    series = []
+    for i, col_name in enumerate(header):
+        series.append({
+            'name': col_name,
+            'type': 'line',
+            'data': [row[i] for row in rows]
+
+        })
+
     echart = {
-        'title': {
-            'text': 'Data Visualization'
-        },
         'tooltip': {
             'trigger': 'axis'
         },
+        'legend': {
+            'data': header[1:],
+        },
         'xAxis': {
             'type': 'value',
-            'name': 'x-axis'
+            'name': header[0],
         },
         'yAxis': {
             'type': 'value',
             'name': 'y-axis'
         },
-        'series': [{
-            'data': data_points,
-            'type': 'line'
-        }]
+        'series': series,
     }
     return echart
-
 
 
 def _load_fes_data(f: str):
@@ -72,14 +89,11 @@ def _load_fes_data(f: str):
                 continue
             else:
                 rows.append(parse_string_array(line, dtype=float, delimiter=' '))
-    # convert to data_dict
-    data_dict = {}
-    assert header is not None, "Invalid fes file: missing header line"
-    for i, header in enumerate(header):
-        data_dict[header] = [row[i] for row in rows]
+    assert header is not None
+    return header, rows
 
 
-
-
-
-    ...
+if __name__ == '__main__':
+    fire.Fire({
+        'gen_report': gen_report,
+    })
