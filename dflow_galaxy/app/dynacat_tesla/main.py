@@ -1,7 +1,7 @@
 from dp.launching.typing import BaseModel, Field, OutputDirectory, InputFilePath
 from dp.launching.typing import Int, String, Enum, Float, Boolean, List, Optional, Dict
 from dp.launching.cli import to_runner, default_minimal_exception_handler
-from dp.launching.report import Report, ReportSection, MetricsChartReportElement
+from dp.launching.report import Report, ReportSection, ChartReportElement
 
 from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context, EnsembleOptions
 from dflow_galaxy.res import get_res_path
@@ -308,7 +308,6 @@ def _gen_report(dp_models_dir: str,
             logger.info(f'No data found for iteration {i}')
             continue
         sections.append(_gen_report_section(i, lcurve_files, model_devi_files))
-
     # write report
     report = Report(title='DynaCat TESLA Report', sections=sections)
     report.save(output_dir)
@@ -318,19 +317,142 @@ def _gen_report_section(iter: int, lcurve_files: List[str], model_devi_files: Li
     elements = []
     if lcurve_files:
         for i, f in enumerate(sorted(lcurve_files)):
-            ...
-
-
+            echart = _gen_lcurve_echart(f)
+            element = ChartReportElement(
+                title=f'Learning Curve of model {i}',
+                options=echart,
+            )
+            elements.append(element)
 
     if model_devi_files:
         # there should be only 1 file in each iteration
         f = model_devi_files[0]
+        echart = _gen_model_devi_stats_echart(f)
+        element = ChartReportElement(
+            title='Model Deviation Statistics',
+            options=echart,
+        )
 
     section = ReportSection(
         title=f'Result of Iteration {iter:03d}',
+        ncols=4,
         elements=elements,
     )
     return section
+
+
+def _gen_model_devi_stats_echart(file: str):
+    data_dict = _load_model_devi_stats(file)
+    echart = {
+        'tooltip': {
+            'trigger': 'axis',
+            'axisPointer': {
+                'type': 'shadow'
+            }
+        },
+        'legend': {
+            'data': ['Good', 'Decent', 'Poor']
+        },
+        'grid': {
+            'left': '3%',
+            'right': '4%',
+            'bottom': '3%',
+            'containLabel': True
+        },
+        'xAxis': {
+            'type': 'value'
+        },
+        'yAxis': {
+            'type': 'category',
+            'data': data_dict['src']
+        },
+        'series': [
+            {
+                'name': 'Good',
+                'type': 'bar',
+                'stack': 'total',
+                'label': {
+                    'show': True
+                },
+                'itemStyle': {
+                    'color': '#67C23A'  # Green color to indicate 'good' is better
+                },
+                'data': [int(d) for d in data_dict['good']]
+            },
+            {
+                'name': 'Decent',
+                'type': 'bar',
+                'stack': 'total',
+                'label': {
+                    'show': True
+                },
+                'itemStyle': {
+                    'color': '#E6A23C'  # Orange color to indicate 'decent'
+                },
+                'data': [int(d) for d in data_dict['decent']]
+            },
+            {
+                'name': 'Poor',
+                'type': 'bar',
+                'stack': 'total',
+                'label': {
+                    'show': True
+                },
+                'itemStyle': {
+                    'color': '#F56C6C'  # Red color to indicate 'poor' (danger)
+                },
+                'data': [int(d) for d in data_dict['poor']]
+            }
+        ]
+    }
+    return echart
+
+
+def _load_model_devi_stats(file: str):
+    # tsv format
+    header = None
+    with open(file, newline='') as fp:
+        headers = next(fp).split('\t')
+        data_dict = {name: [] for name in headers}
+
+        for line in fp:
+            line = line.strip()
+            if not line:
+                continue
+            values = line.split('\t')
+            for i, header in enumerate(headers):
+                data_dict[header].append(values[i])
+    return data_dict
+
+
+def _gen_lcurve_echart(file: str):
+    series = _load_lcurve(file)
+    x = series.pop('step')
+    echart = {
+        'tooltip': {
+            'trigger': 'axis',
+        },
+        'xAixs': {
+            'type': 'category',
+            'name': 'Step',
+            'data': x,
+        },
+        'yAxis': {
+            'type': 'log',
+        },
+        'legend': {
+            'data': [name for name in series.keys()],
+        },
+        'series': [],
+    }
+    for name, data in series.items():
+        echart['series'].append({
+            'name': name,
+            'data': data,
+            'type': 'line',
+            'smooth': True,
+        })
+    return echart
 
 
 def _load_lcurve(file: str):
@@ -497,5 +619,5 @@ def main():
 if __name__ == "__main__":
     fire.Fire({
         'main': main,
-        'load_lcurve': _load_lcurve,
+        'generate_report': _gen_report,
     })

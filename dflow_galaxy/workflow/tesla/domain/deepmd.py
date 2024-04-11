@@ -163,7 +163,7 @@ class RunDeepmdTrainingFn:
                     '# persist result',
                     f'PERSIST_DIR={args.persist_dir}/$ITEM/persist/',
                     'mkdir -p $PERSIST_DIR',
-                    'rm model.ckpt* || true'
+                    'rm model.ckpt* || true',
                     'mv *.* $PERSIST_DIR',
                     'popd',
                 ]
