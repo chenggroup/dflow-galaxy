@@ -277,10 +277,13 @@ def launch_app(args: DynacatTeslaArgs) -> int:
         # reclaim useful data
         dp_dataset_dir = os.path.join(args.output_dir, 'dp-dataset')
         dp_models_dir = os.path.join(args.output_dir, 'dp-models')
+        model_devi_dir = os.path.join(args.output_dir, 'model-devi')
         os.makedirs(dp_dataset_dir, exist_ok=True)
         os.makedirs(dp_models_dir, exist_ok=True)
+        os.makedirs(model_devi_dir, exist_ok=True)
         workflow.s3_download('iter-dataset', dp_dataset_dir)
         workflow.s3_download('train-deepmd', dp_models_dir)
+        workflow.s3_download('screen-model-devi', model_devi_dir)
     return 0
 
 
