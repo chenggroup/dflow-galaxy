@@ -1,6 +1,7 @@
 from dp.launching.typing import BaseModel, Field, OutputDirectory, InputFilePath
 from dp.launching.typing import Int, String, Enum, Float, Boolean, List, Optional, Dict
 from dp.launching.cli import to_runner, default_minimal_exception_handler
+from dp.launching.report import Report, ReportSection, MetricsChartReportElement
 
 from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context, EnsembleOptions
 from dflow_galaxy.res import get_res_path
@@ -12,6 +13,7 @@ from ai2_kit.core.util import dump_json, load_text, load_json
 from ai2_kit.feat import catalysis as ai2cat
 
 import ase.io
+import fire
 
 from pathlib import Path
 from uuid import uuid4
@@ -284,7 +286,73 @@ def launch_app(args: DynacatTeslaArgs) -> int:
         workflow.s3_download('iter-dataset', dp_dataset_dir)
         workflow.s3_download('train-deepmd', dp_models_dir)
         workflow.s3_download('screen-model-devi', model_devi_dir)
+        _gen_report(dp_models_dir=dp_models_dir,
+                    model_devi_dir=model_devi_dir,
+                    max_iters=args.max_iters,
+                    output_dir=str(args.output_dir))
     return 0
+
+
+def _gen_report(dp_models_dir: str,
+                model_devi_dir: str,
+                max_iters: int,
+                output_dir: str):
+    # build report sections, each iter per section, from last to first
+    sections = []
+    for i in reversed(range(max_iters)):
+        iter_str = f'iter/{i:03d}'
+        lcurve_files = glob.glob(f'{dp_models_dir}/{iter_str}/**/lcurve.out', recursive=True)
+        model_devi_files = glob.glob(f'{model_devi_dir}/{iter_str}/**/report.tsv', recursive=True)
+
+        if not (lcurve_files or model_devi_files):
+            logger.info(f'No data found for iteration {i}')
+            continue
+        sections.append(_gen_report_section(i, lcurve_files, model_devi_files))
+
+    # write report
+    report = Report(title='DynaCat TESLA Report', sections=sections)
+    report.save(output_dir)
+
+
+def _gen_report_section(iter: int, lcurve_files: List[str], model_devi_files: List[str]):
+    elements = []
+    if lcurve_files:
+        for i, f in enumerate(sorted(lcurve_files)):
+            ...
+
+
+
+    if model_devi_files:
+        # there should be only 1 file in each iteration
+        f = model_devi_files[0]
+
+    section = ReportSection(
+        title=f'Result of Iteration {iter:03d}',
+        elements=elements,
+    )
+    return section
+
+
+def _load_lcurve(file: str):
+    header = None
+    data = []
+    with open(file, encoding='utf-8') as fp:
+        for line in fp:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith('#'):
+                if header is not None:
+                    continue  # ignore comment line
+                header = line[1:].split()
+            else:
+                data.append([float(x) for x in line.split()])
+    assert header is not None, 'Failed to parse lcurve file'
+    # convert to series
+    series = {}
+    for i, h in enumerate(header):
+        series[h] = [d[i] for d in data]
+    return series
 
 
 def _get_executor_config(args: DynacatTeslaArgs):
@@ -427,4 +495,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    fire.Fire({
+        'main': main,
+        'load_lcurve': _load_lcurve,
+    })
