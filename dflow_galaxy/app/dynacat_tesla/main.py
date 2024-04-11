@@ -6,6 +6,7 @@ from dp.launching.report import Report, ReportSection, ChartReportElement
 from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context, EnsembleOptions
 from dflow_galaxy.res import get_res_path
 from dflow_galaxy.core.log import get_logger
+from dflow_galaxy.core.util import parse_string_array
 
 from dflow_galaxy.workflow.tesla.main import build_tesla_workflow
 
@@ -22,6 +23,7 @@ import glob
 import sys
 import os
 
+from .report import gen_report
 
 logger = get_logger(__name__)
 
@@ -286,205 +288,13 @@ def launch_app(args: DynacatTeslaArgs) -> int:
         workflow.s3_download('iter-dataset', dp_dataset_dir)
         workflow.s3_download('train-deepmd', dp_models_dir)
         workflow.s3_download('screen-model-devi', model_devi_dir)
-        _gen_report(dp_models_dir=dp_models_dir,
-                    model_devi_dir=model_devi_dir,
-                    max_iters=args.max_iters,
-                    output_dir=str(args.output_dir))
+        gen_report(dp_models_dir=dp_models_dir,
+                   model_devi_dir=model_devi_dir,
+                   max_iters=args.max_iters,
+                   output_dir=str(args.output_dir))
     return 0
 
 
-def _gen_report(dp_models_dir: str,
-                model_devi_dir: str,
-                max_iters: int,
-                output_dir: str):
-    # build report sections, each iter per section, from last to first
-    sections = []
-    for i in reversed(range(max_iters)):
-        iter_str = f'iter/{i:03d}'
-        lcurve_files = glob.glob(f'{dp_models_dir}/{iter_str}/**/lcurve.out', recursive=True)
-        model_devi_files = glob.glob(f'{model_devi_dir}/{iter_str}/**/report.tsv', recursive=True)
-
-        if not (lcurve_files or model_devi_files):
-            logger.info(f'No data found for iteration {i}')
-            continue
-        sections.append(_gen_report_section(i, lcurve_files, model_devi_files))
-    # write report
-    report = Report(title='DynaCat TESLA', sections=sections)
-    report.save(output_dir)
-
-
-def _gen_report_section(iter: int, lcurve_files: List[str], model_devi_files: List[str]):
-    elements = []
-    if lcurve_files:
-        for i, f in enumerate(sorted(lcurve_files)):
-            name = os.path.dirname(f)
-            echart = _gen_lcurve_echart(f)
-            element = ChartReportElement(
-                title=f'Learning Curve of training: {name}',
-                options=echart,
-            )
-            elements.append(element)
-
-    if model_devi_files:
-        # there should be only 1 file in each iteration
-        f = model_devi_files[0]
-        echart = _gen_model_devi_stats_echart(f)
-        element = ChartReportElement(
-            title='Model Deviation Statistics',
-            options=echart,
-        )
-        elements.append(element)
-
-    section = ReportSection(
-        title=f'Result of Iteration {iter:03d}',
-        ncols=2,
-        elements=elements,
-    )
-    return section
-
-
-def _gen_model_devi_stats_echart(file: str):
-    data_dict = _load_model_devi_stats(file)
-    echart = {
-        'tooltip': {
-            'trigger': 'axis',
-            'axisPointer': {
-                'type': 'shadow'
-            }
-        },
-        'legend': {
-            'data': ['Good', 'Decent', 'Poor']
-        },
-        'grid': {
-            'left': '10%',
-            'right': '10%',
-            'bottom': '3%',
-            'containLabel': True
-        },
-        'xAxis': {
-            'type': 'value'
-        },
-        'yAxis': {
-            'type': 'category',
-            'data': data_dict['src']
-        },
-        'series': [
-            {
-                'name': 'Good',
-                'type': 'bar',
-                'stack': 'total',
-                'label': {
-                    'show': False,
-                },
-                'itemStyle': {
-                    'color': '#67C23A'  # Green color to indicate 'good' is better
-                },
-                'data': [int(d) for d in data_dict['good']]
-            },
-            {
-                'name': 'Decent',
-                'type': 'bar',
-                'stack': 'total',
-                'label': {
-                    'show': False
-                },
-                'itemStyle': {
-                    'color': '#E6A23C'  # Orange color to indicate 'decent'
-                },
-                'data': [int(d) for d in data_dict['decent']]
-            },
-            {
-                'name': 'Poor',
-                'type': 'bar',
-                'stack': 'total',
-                'label': {
-                    'show': False
-                },
-                'itemStyle': {
-                    'color': '#F56C6C'  # Red color to indicate 'poor' (danger)
-                },
-                'data': [int(d) for d in data_dict['poor']]
-            }
-        ]
-    }
-    return echart
-
-
-def _load_model_devi_stats(file: str):
-    header = None
-    with open(file, newline='') as fp:
-        headers = _parse_string_array(next(fp), delimiter='\t')
-        data_dict = {name: [] for name in headers}
-        for line in fp:
-            line = line.strip()
-            if not line:
-                continue
-            values = _parse_string_array(line, delimiter='\t')
-            for i, header in enumerate(headers):
-                data_dict[header].append(values[i])
-    return data_dict
-
-
-def _gen_lcurve_echart(file: str):
-    series = _load_lcurve(file)
-    x = series.pop('step')
-    echart = {
-        'tooltip': {
-            'trigger': 'axis',
-        },
-        'xAxis': {
-            'type': 'category',
-            'name': 'Step',
-            'data': x,
-        },
-        'yAxis': [
-            {
-                'type': 'log',
-                'name': 'RMSE',
-                'position': 'left',
-            },
-            {
-                'type': 'log',
-                'name': 'Learning Rate',
-                'position': 'right',
-            }
-        ],
-        'legend': {
-            'data': [name for name in series.keys()],
-        },
-        'series': [],
-    }
-    for name, data in series.items():
-        echart['series'].append({
-            'name': name,
-            'data': data,
-            'type': 'line',
-            'smooth': True,
-            'yAxisIndex': 0 if name != 'lr' else 1,
-        })
-    return echart
-
-
-def _load_lcurve(file: str):
-    header = None
-    data = []
-    with open(file, encoding='utf-8') as fp:
-        for line in fp:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('#'):
-                if header is not None:
-                    continue  # ignore comment line
-                header = line[1:].split()
-            else:
-                data.append([float(x) for x in line.split()])
-    assert header is not None, 'Failed to parse lcurve file'
-    # convert to series
-    series = {}
-    for i, h in enumerate(header):
-        series[h] = [d[i] for d in data]
-    return series
 
 
 def _get_executor_config(args: DynacatTeslaArgs):
@@ -599,17 +409,11 @@ def _get_lammps_vars(explore_vars: List[ExploreItem]):
     product_vars = {}
     for item in explore_vars:
         if item.broadcast:
-            broadcast_vars[item.key] = _parse_string_array(item.value, dtype=float)
+            broadcast_vars[item.key] = parse_string_array(item.value, dtype=float)
         else:
-            product_vars[item.key] = _parse_string_array(item.value, dtype=float)
+            product_vars[item.key] = parse_string_array(item.value, dtype=float)
     return product_vars, broadcast_vars
 
-
-def _parse_string_array(s: str, dtype=None, delimiter=','):
-    arr = [x.strip() for x in s.split(delimiter)]
-    if dtype:
-        arr = [dtype(x) for x in arr]
-    return arr
 
 
 def _unpack_dpdata(file: str, extract_dir: str):
@@ -632,5 +436,5 @@ def main():
 if __name__ == "__main__":
     fire.Fire({
         'main': main,
-        'generate_report': _gen_report,
+        'generate_report': gen_report,
     })
