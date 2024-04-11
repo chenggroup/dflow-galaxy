@@ -356,8 +356,8 @@ def _gen_model_devi_stats_echart(file: str):
             'data': ['Good', 'Decent', 'Poor']
         },
         'grid': {
-            'left': '3%',
-            'right': '4%',
+            'left': '10%',
+            'right': '10%',
             'bottom': '3%',
             'containLabel': True
         },
@@ -374,7 +374,7 @@ def _gen_model_devi_stats_echart(file: str):
                 'type': 'bar',
                 'stack': 'total',
                 'label': {
-                    'show': True
+                    'show': False,
                 },
                 'itemStyle': {
                     'color': '#67C23A'  # Green color to indicate 'good' is better
@@ -386,7 +386,7 @@ def _gen_model_devi_stats_echart(file: str):
                 'type': 'bar',
                 'stack': 'total',
                 'label': {
-                    'show': True
+                    'show': False
                 },
                 'itemStyle': {
                     'color': '#E6A23C'  # Orange color to indicate 'decent'
@@ -398,7 +398,7 @@ def _gen_model_devi_stats_echart(file: str):
                 'type': 'bar',
                 'stack': 'total',
                 'label': {
-                    'show': True
+                    'show': False
                 },
                 'itemStyle': {
                     'color': '#F56C6C'  # Red color to indicate 'poor' (danger)
