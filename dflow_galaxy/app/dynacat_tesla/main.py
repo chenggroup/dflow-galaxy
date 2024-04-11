@@ -6,7 +6,7 @@ from dp.launching.report import Report, ReportSection, ChartReportElement
 from dflow_galaxy.app.common import DFlowOptions, setup_dflow_context, EnsembleOptions
 from dflow_galaxy.res import get_res_path
 from dflow_galaxy.core.log import get_logger
-from dflow_galaxy.core.util import parse_string_array
+from dflow_galaxy.core.util import parse_string_array, str_or_none
 
 from dflow_galaxy.workflow.tesla.main import build_tesla_workflow
 
@@ -182,17 +182,17 @@ class Cp2kSettings(BaseModel):
 class DynacatTeslaArgs(DFlowOptions):
     deepmd_dataset : InputFilePath = Field(
         title='DeepMD Dataset',
-        description="DeepMD in zip or tgz format")
+        description="DeepMD in zip or tgz format, for example: deepmd-dataset.tgz")
 
     deepmd_input_template: InputFilePath = Field(
         title='DeepMD Input Template',
-        description="Input template file for DeepMD training")
+        description="Input template file for DeepMD training, in json format, for example: deepmd.json")
 
     lammps_system_file: InputFilePath = Field(
-        description="Structure file in xyz format use for LAMMPS simulation")
+        description="Structure file in xyz format use for LAMMPS simulation, for example h2o.xyz")
 
     cp2k_input_template: InputFilePath = Field(
-        description="Input template file for CP2K simulation")
+        description="Input template file for CP2K simulation, for example: cp2k.inp")
 
     dry_run: Boolean = Field(
         default = True,
@@ -382,7 +382,7 @@ def _get_workflow_config(args: DynacatTeslaArgs, dp_dataset_config: dict):
                     'timestep': args.lammps.timestep,
                     'sample_freq': args.lammps.sample_freq,
                     'no_pbc': args.lammps.no_pbc,
-                    'plumed_config': args.lammps.plumed_config or None,
+                    'plumed_config': str_or_none(args.lammps.plumed_config),
                     'product_vars': product_vars,
                     'broadcast_vars': broadcast_vars,
                     'template_vars': dict((item.key, item.value) for item in args.lammps.template_vars),
@@ -415,7 +415,6 @@ def _get_lammps_vars(explore_vars: List[ExploreItem]):
     return product_vars, broadcast_vars
 
 
-
 def _unpack_dpdata(file: str, extract_dir: str):
     extract_dir = os.path.normpath(extract_dir)
     os.makedirs(extract_dir, exist_ok=True)
@@ -423,6 +422,8 @@ def _unpack_dpdata(file: str, extract_dir: str):
     # use type.raw to locate the dpdata folder
     paths = glob.glob(f'{extract_dir}/**/type.raw', recursive=True)
     return [ os.path.dirname(p) for p in paths]
+
+
 
 
 def main():

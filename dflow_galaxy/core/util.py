@@ -184,3 +184,11 @@ def parse_string_array(s: str, dtype=None, delimiter=','):
     if dtype:
         arr = [dtype(x) for x in arr]
     return arr
+
+def str_or_none(s):
+    """
+    return None if s is empty string
+    """
+    if not s:
+        return None
+    return s

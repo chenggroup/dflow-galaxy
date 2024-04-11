@@ -96,6 +96,9 @@ def launch_app(args: DynaCatMdArgs) -> int:
     config_builder = ai2cat.ConfigBuilder()
 
     shutil.copy(args.deepmd_model, 'dp-model.pb')
+    if not args.plumed_config:
+        raise ValueError('plumed_config is required for metadynamics simulation')
+
     dump_text(args.plumed_config, 'plumed.inp')
 
     logger.info(f'type of system_file: {type(args.system_file)}')
