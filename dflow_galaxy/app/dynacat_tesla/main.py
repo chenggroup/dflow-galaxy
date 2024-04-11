@@ -309,7 +309,7 @@ def _gen_report(dp_models_dir: str,
             continue
         sections.append(_gen_report_section(i, lcurve_files, model_devi_files))
     # write report
-    report = Report(title='DynaCat TESLA Report', sections=sections)
+    report = Report(title='DynaCat TESLA', sections=sections)
     report.save(output_dir)
 
 
