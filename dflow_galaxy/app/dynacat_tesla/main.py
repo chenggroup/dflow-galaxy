@@ -437,9 +437,18 @@ def _gen_lcurve_echart(file: str):
             'name': 'Step',
             'data': x,
         },
-        'yAxis': {
-            'type': 'log',
-        },
+        'yAxis': [
+            {
+                'type': 'log',
+                'name': 'RMSE',
+                'position': 'left',
+            },
+            {
+                'type': 'log',
+                'name': 'Learning Rate',
+                'position': 'right',
+            }
+        ],
         'legend': {
             'data': [name for name in series.keys()],
         },
@@ -451,6 +460,7 @@ def _gen_lcurve_echart(file: str):
             'data': data,
             'type': 'line',
             'smooth': True,
+            'yAxisIndex': 0 if name != 'lr' else 1,
         })
     return echart
 
