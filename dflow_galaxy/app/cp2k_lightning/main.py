@@ -82,7 +82,7 @@ class Cp2kLightningArgs(DFlowOptions):
         description="Generate configuration file without running the simulation")
 
     system_file: InputFilePath = Field(
-        description="A system file as the initial structure of AIMD simulation")
+        description="A system file as the initial structure of AIMD simulation, can be xyz, cif, POSCAR format")
 
     system_type: SystemTypeOptions = Field(
         default=SystemTypeOptions.metal,

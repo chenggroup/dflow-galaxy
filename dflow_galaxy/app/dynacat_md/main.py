@@ -26,7 +26,7 @@ class DynaCatMdArgs(DFlowOptions):
         description="Generate configuration file without running the simulation")
 
     system_file: InputFilePath = Field(
-        description="A system file as the initial structure of LAMMPS simulation")
+        description="A system file as the initial structure of LAMMPS simulation, can be xyz, cif, POSCAR, etc.")
 
     # TODO: support multiple deepmd models
     deepmd_model: InputFilePath = Field(
