@@ -9,6 +9,7 @@ import fire
 
 def gen_report(lammps_output_dir: str,
                output_dir: str):
+    os.makedirs(output_dir, exist_ok=True)
     sections = []
     fes_file = os.path.join(lammps_output_dir, 'fes.dat')
 
@@ -16,7 +17,6 @@ def gen_report(lammps_output_dir: str,
         title='FES plot',
         options=_gen_fes_echart(fes_file),
     )
-
     sections.append(ReportSection(
         title='FES',
         ncols=1,
@@ -32,7 +32,7 @@ def _gen_fes_echart(f: str):
     header, rows = _load_fes_data(f)
 
     series = []
-    for i, col_name in enumerate(header):
+    for i, col_name in enumerate(header[1:]):
         series.append({
             'name': col_name,
             'type': 'line',
@@ -48,8 +48,9 @@ def _gen_fes_echart(f: str):
             'data': header[1:],
         },
         'xAxis': {
-            'type': 'value',
+            'type': 'category',
             'name': header[0],
+            'data': [row[0] for row in rows],
         },
         'yAxis': {
             'type': 'value',
@@ -84,11 +85,11 @@ def _load_fes_data(f: str):
             if not line:
                 continue
             if line.startswith(field_prefix):
-                header = parse_string_array(line[len(field_prefix):], delimiter=' ')
+                header = parse_string_array(line[len(field_prefix):])
             elif line.startswith('#'):
                 continue
             else:
-                rows.append(parse_string_array(line, dtype=float, delimiter=' '))
+                rows.append(parse_string_array(line, dtype=float))
     assert header is not None
     return header, rows
 

@@ -10,6 +10,7 @@ def gen_report(dp_models_dir: str,
                max_iters: int,
                output_dir: str):
     # build report sections, each iter per section, from last to first
+    os.makedirs(output_dir, exist_ok=True)
     sections = []
     for i in reversed(range(max_iters)):
         iter_str = f'iter/{i:03d}'

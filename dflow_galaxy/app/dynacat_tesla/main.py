@@ -410,9 +410,9 @@ def _get_lammps_vars(explore_vars: List[ExploreItem]):
     product_vars = {}
     for item in explore_vars:
         if item.broadcast:
-            broadcast_vars[item.key] = parse_string_array(item.value, dtype=float)
+            broadcast_vars[item.key] = parse_string_array(item.value, dtype=float, delimiter=',')
         else:
-            product_vars[item.key] = parse_string_array(item.value, dtype=float)
+            product_vars[item.key] = parse_string_array(item.value, dtype=float, delimiter=',')
     return product_vars, broadcast_vars
 
 

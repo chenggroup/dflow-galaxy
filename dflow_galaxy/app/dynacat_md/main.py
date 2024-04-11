@@ -132,7 +132,8 @@ def launch_app(args: DynaCatMdArgs) -> int:
     )
 
     try:
-        gen_report(lammps_output_dir, str(args.output_dir))
+        gen_report(lammps_output_dir=lammps_output_dir,
+                   output_dir=str(args.output_dir))
     except:
         logger.exception('Failed to generate report')
     return 0

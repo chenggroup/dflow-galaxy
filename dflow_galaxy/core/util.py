@@ -179,7 +179,7 @@ def resolve_ln(path: str, mv=False):
                 resolve_ln(dir_path, mv=mv)
 
 
-def parse_string_array(s: str, dtype=None, delimiter=','):
+def parse_string_array(s: str, dtype=None, delimiter=None):
     arr = [x.strip() for x in s.split(delimiter)]
     if dtype:
         arr = [dtype(x) for x in arr]
