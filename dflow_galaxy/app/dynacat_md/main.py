@@ -12,8 +12,6 @@ from pathlib import Path
 import shutil
 import sys
 import os
-import numpy as np
-import matplotlib.pyplot as plt
 
 from .dflow import run_lammps_workflow
 

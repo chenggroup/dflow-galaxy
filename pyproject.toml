@@ -13,6 +13,7 @@ dpdispatcher = "^0.6.4"
 ai2-kit= "0.15.10"
 dp-launching-sdk = "^0.12.0"
 lbg = "^1.2.24"
+cp2kdata = "^0.6.6"
 
 
 [tool.poetry.group.dev.dependencies]
