@@ -317,9 +317,10 @@ def _gen_report_section(iter: int, lcurve_files: List[str], model_devi_files: Li
     elements = []
     if lcurve_files:
         for i, f in enumerate(sorted(lcurve_files)):
+            name = os.path.dirname(f)
             echart = _gen_lcurve_echart(f)
             element = ChartReportElement(
-                title=f'Learning Curve of model {i}',
+                title=f'Learning Curve of training: {name}',
                 options=echart,
             )
             elements.append(element)
@@ -332,10 +333,11 @@ def _gen_report_section(iter: int, lcurve_files: List[str], model_devi_files: Li
             title='Model Deviation Statistics',
             options=echart,
         )
+        elements.append(element)
 
     section = ReportSection(
         title=f'Result of Iteration {iter:03d}',
-        ncols=4,
+        ncols=2,
         elements=elements,
     )
     return section
@@ -409,17 +411,15 @@ def _gen_model_devi_stats_echart(file: str):
 
 
 def _load_model_devi_stats(file: str):
-    # tsv format
     header = None
     with open(file, newline='') as fp:
-        headers = next(fp).split('\t')
+        headers = _parse_string_array(next(fp), delimiter='\t')
         data_dict = {name: [] for name in headers}
-
         for line in fp:
             line = line.strip()
             if not line:
                 continue
-            values = line.split('\t')
+            values = _parse_string_array(line, delimiter='\t')
             for i, header in enumerate(headers):
                 data_dict[header].append(values[i])
     return data_dict
@@ -432,7 +432,7 @@ def _gen_lcurve_echart(file: str):
         'tooltip': {
             'trigger': 'axis',
         },
-        'xAixs': {
+        'xAxis': {
             'type': 'category',
             'name': 'Step',
             'data': x,
@@ -595,8 +595,11 @@ def _get_lammps_vars(explore_vars: List[ExploreItem]):
     return product_vars, broadcast_vars
 
 
-def _parse_string_array(s: str, dtype=float, delimiter=','):
-    return [dtype(x) for x in s.split(delimiter)]
+def _parse_string_array(s: str, dtype=None, delimiter=','):
+    arr = [x.strip() for x in s.split(delimiter)]
+    if dtype:
+        arr = [dtype(x) for x in arr]
+    return arr
 
 
 def _unpack_dpdata(file: str, extract_dir: str):
